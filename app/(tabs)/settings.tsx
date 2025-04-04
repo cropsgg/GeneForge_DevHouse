@@ -1,18 +1,31 @@
-import { View, Text, StyleSheet, Switch, ScrollView, useColorScheme, TouchableOpacity } from 'react-native';
-import { useState } from 'react';
+import { View, Text, StyleSheet, Switch, ScrollView, TouchableOpacity, Button } from 'react-native';
+import { useState, useContext } from 'react';
 import { Bell, Moon, ChartBar, Shield, Mail, Key } from 'lucide-react-native';
+import { useTheme } from '../context/ThemeContext';
+import { AuthContext } from '../context/AuthContext';
+import { signOut } from '../auth/auth';
+import { useRouter } from 'expo-router';
 
 export default function SettingsScreen() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { isDark, toggleTheme } = useTheme();
+  const { user } = useContext(AuthContext) || { user: null };
+  const router = useRouter();
   
   const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(isDark);
   const [analytics, setAnalytics] = useState(true);
+
+  const handleLogout = async () => {
+    const { error } = await signOut();
+    if (error) {
+      console.error('Logout Error:', error);
+    } else {
+      router.push('/auth');
+    }
+  };
 
   return (
     <ScrollView style={[styles.container, isDark && styles.containerDark]}>
-      <View style={styles.header}>
+      <View style={[styles.header, isDark && styles.headerDark]}>
         <Text style={[styles.title, isDark && styles.textDark]}>Settings</Text>
         <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>
           Manage your app preferences and account settings
@@ -20,6 +33,29 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.content}>
+        {/* Profile Section */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Profile</Text>
+          {user ? (
+            <View style={[styles.settingCard, isDark && styles.settingCardDark]}>
+              <View style={styles.settingHeader}>
+                <Mail size={20} color={isDark ? '#6366F1' : '#4F46E5'} />
+                <Text style={[styles.settingText, isDark && styles.textDark]}>
+                  {user.email}
+                </Text>
+              </View>
+              <Button title="Logout" onPress={handleLogout} color={isDark ? '#6366F1' : '#4F46E5'} />
+            </View>
+          ) : (
+            <View style={[styles.settingCard, isDark && styles.settingCardDark]}>
+              <Text style={[styles.errorText, isDark && styles.textDark]}>
+                No user is signed in
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Existing Preferences Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Preferences</Text>
           
@@ -42,10 +78,10 @@ export default function SettingsScreen() {
               <Text style={[styles.settingText, isDark && styles.textDark]}>Dark Mode</Text>
             </View>
             <Switch
-              value={darkMode}
-              onValueChange={setDarkMode}
+              value={isDark}
+              onValueChange={toggleTheme}
               trackColor={{ false: '#D1D5DB', true: '#818CF8' }}
-              thumbColor={darkMode ? '#6366F1' : '#F3F4F6'}
+              thumbColor={isDark ? '#6366F1' : '#F3F4F6'}
             />
           </View>
 
@@ -183,5 +219,10 @@ const styles = StyleSheet.create({
   },
   infoTextDark: {
     color: '#9CA3AF',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
   },
 });
