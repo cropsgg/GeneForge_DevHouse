@@ -1,0 +1,187 @@
+import { View, Text, StyleSheet, Switch, ScrollView, useColorScheme, TouchableOpacity } from 'react-native';
+import { useState } from 'react';
+import { Bell, Moon, ChartBar, Shield, Mail, Key } from 'lucide-react-native';
+
+export default function SettingsScreen() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  
+  const [notifications, setNotifications] = useState(true);
+  const [darkMode, setDarkMode] = useState(isDark);
+  const [analytics, setAnalytics] = useState(true);
+
+  return (
+    <ScrollView style={[styles.container, isDark && styles.containerDark]}>
+      <View style={styles.header}>
+        <Text style={[styles.title, isDark && styles.textDark]}>Settings</Text>
+        <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>
+          Manage your app preferences and account settings
+        </Text>
+      </View>
+
+      <View style={styles.content}>
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Preferences</Text>
+          
+          <View style={[styles.settingCard, isDark && styles.settingCardDark]}>
+            <View style={styles.settingHeader}>
+              <Bell size={20} color={isDark ? '#6366F1' : '#4F46E5'} />
+              <Text style={[styles.settingText, isDark && styles.textDark]}>Notifications</Text>
+            </View>
+            <Switch
+              value={notifications}
+              onValueChange={setNotifications}
+              trackColor={{ false: '#D1D5DB', true: '#818CF8' }}
+              thumbColor={notifications ? '#6366F1' : '#F3F4F6'}
+            />
+          </View>
+
+          <View style={[styles.settingCard, isDark && styles.settingCardDark]}>
+            <View style={styles.settingHeader}>
+              <Moon size={20} color={isDark ? '#6366F1' : '#4F46E5'} />
+              <Text style={[styles.settingText, isDark && styles.textDark]}>Dark Mode</Text>
+            </View>
+            <Switch
+              value={darkMode}
+              onValueChange={setDarkMode}
+              trackColor={{ false: '#D1D5DB', true: '#818CF8' }}
+              thumbColor={darkMode ? '#6366F1' : '#F3F4F6'}
+            />
+          </View>
+
+          <View style={[styles.settingCard, isDark && styles.settingCardDark]}>
+            <View style={styles.settingHeader}>
+              <ChartBar size={20} color={isDark ? '#6366F1' : '#4F46E5'} />
+              <Text style={[styles.settingText, isDark && styles.textDark]}>Analytics</Text>
+            </View>
+            <Switch
+              value={analytics}
+              onValueChange={setAnalytics}
+              trackColor={{ false: '#D1D5DB', true: '#818CF8' }}
+              thumbColor={analytics ? '#6366F1' : '#F3F4F6'}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Account</Text>
+          
+          <TouchableOpacity style={[styles.settingCard, isDark && styles.settingCardDark]}>
+            <View style={styles.settingHeader}>
+              <Mail size={20} color={isDark ? '#6366F1' : '#4F46E5'} />
+              <Text style={[styles.settingText, isDark && styles.textDark]}>Email Preferences</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.settingCard, isDark && styles.settingCardDark]}>
+            <View style={styles.settingHeader}>
+              <Key size={20} color={isDark ? '#6366F1' : '#4F46E5'} />
+              <Text style={[styles.settingText, isDark && styles.textDark]}>Change Password</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.settingCard, isDark && styles.settingCardDark]}>
+            <View style={styles.settingHeader}>
+              <Shield size={20} color={isDark ? '#6366F1' : '#4F46E5'} />
+              <Text style={[styles.settingText, isDark && styles.textDark]}>Privacy Settings</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, isDark && styles.textDark]}>App Information</Text>
+          <View style={[styles.infoCard, isDark && styles.infoCardDark]}>
+            <Text style={[styles.infoText, isDark && styles.infoTextDark]}>Version: 1.0.0</Text>
+            <Text style={[styles.infoText, isDark && styles.infoTextDark]}>Build: 2025.1.1</Text>
+          </View>
+        </View>
+      </View>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  containerDark: {
+    backgroundColor: '#111827',
+  },
+  header: {
+    padding: 24,
+    paddingTop: 48,
+    backgroundColor: '#F9FAFB',
+  },
+  headerDark: {
+    backgroundColor: '#1F2937',
+  },
+  content: {
+    padding: 20,
+  },
+  title: {
+    fontSize: 32,
+    fontFamily: 'Inter_700Bold',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#6B7280',
+  },
+  subtitleDark: {
+    color: '#9CA3AF',
+  },
+  section: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#111827',
+    marginBottom: 16,
+  },
+  settingCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  settingCardDark: {
+    backgroundColor: '#1F2937',
+  },
+  settingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  settingText: {
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    color: '#111827',
+    marginLeft: 12,
+  },
+  textDark: {
+    color: '#F9FAFB',
+  },
+  infoCard: {
+    backgroundColor: '#F9FAFB',
+    padding: 16,
+    borderRadius: 12,
+  },
+  infoCardDark: {
+    backgroundColor: '#1F2937',
+  },
+  infoText: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  infoTextDark: {
+    color: '#9CA3AF',
+  },
+});
