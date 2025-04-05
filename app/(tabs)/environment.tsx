@@ -32,17 +32,19 @@ export default function EnvironmentScreen() {
   const { isDark } = useTheme();
 
   const [labEnvironment, setLabEnvironment] = useState<LabEnvironment | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Initial loading state
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch lab environment data on component mount
+  // Fetch lab environment data on component mount and set interval for real-time updates
   useEffect(() => {
     fetchLabEnvironment();
+    const intervalId = setInterval(fetchLabEnvironment, 10000); // Fetch every 3 seconds
+
+    return () => clearInterval(intervalId); // Cleanup interval on component unmount
   }, []);
 
   // Function to fetch lab environment data from the server
   const fetchLabEnvironment = async () => {
-    setLoading(true);
     setError(null);
     
     try {
@@ -65,25 +67,22 @@ export default function EnvironmentScreen() {
         data.aqi >= OPTIMAL_RANGES.aqi.min && 
         data.aqi <= OPTIMAL_RANGES.aqi.max;
       
-      setLabEnvironment({
+      // Use functional update to ensure smooth state transition
+      setLabEnvironment(prev => ({
         temperature: data.temperature,
         humidity: data.humidity,
         aqi: data.aqi,
         isOptimal
-      });
+      }));
     } catch (error) {
       console.error('Error fetching environment data:', error);
       setError('Failed to fetch laboratory environment data');
-      Alert.alert(
-        'Error',
-        'Failed to fetch laboratory environment data',
-        [{ text: 'OK' }]
-      );
     } finally {
-      setLoading(false);
+      setLoading(false); // Only set loading to false after initial load
     }
   };
 
+  // Render the environment data
   return (
     <ScrollView
       style={[styles.container, isDark && styles.containerDark]}
@@ -116,12 +115,7 @@ export default function EnvironmentScreen() {
               Checking laboratory environment...
             </Text>
           </View>
-        ) : !labEnvironment ? (
-          <View style={styles.errorContainer}>
-            <AlertCircle color="#EF4444" size={20} />
-            <Text style={styles.errorText}>Failed to fetch environment data</Text>
-          </View>
-        ) : (
+        ) : labEnvironment && (
           <View style={styles.section}>
             <View style={[styles.environmentCard, isDark && styles.environmentCardDark]}>
               <Text style={[styles.sectionTitle, isDark && styles.textDark]}>
