@@ -1,9 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState, useContext } from 'react';
-import { View, TextInput, Button, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, TextInput, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 
-import { signUp, signIn } from './auth/auth';
+import { signIn } from './auth/auth';
 import { AuthContext } from './context/AuthContext';
 import { useTheme } from './context/ThemeContext';
 
@@ -14,19 +14,6 @@ export default function AuthScreen() {
   const router = useRouter();
   const { setUser } = useContext(AuthContext) || { setUser: () => {} };
   const { isDark } = useTheme();
-
-  const handleSignUp = async () => {
-    const { user, error } = await signUp(email, password);
-    if (error) {
-      setError(error.message);
-      Alert.alert('Sign Up Error', error.message);
-    } else {
-      // eslint-disable-next-line no-console
-      console.log('User signed up:', user);
-      setUser(user);
-      router.push('/');
-    }
-  };
 
   const handleSignIn = async () => {
     const { user, error } = await signIn(email, password);
@@ -47,19 +34,29 @@ export default function AuthScreen() {
     router.push('/');
   };
 
+  const navigateToSignUp = () => {
+    router.push('/signup');
+  };
+
   return (
     <LinearGradient
       colors={isDark ? ['#1F2937', '#111827'] : ['#F9FAFB', '#F3F4F6']}
       style={styles.container}
     >
       <View style={[styles.innerContainer, isDark && styles.innerContainerDark]}>
-        <Text style={[styles.title, isDark && styles.titleDark]}>Welcome to GeneEdit AI</Text>
+        <Text style={[styles.title, isDark && styles.titleDark]}>Welcome Back</Text>
+        <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>
+          Sign in to your GeneEdit AI account
+        </Text>
+        
         <TextInput
           placeholder="Email"
           value={email}
           onChangeText={setEmail}
           style={[styles.input, isDark && styles.inputDark]}
           placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'}
+          keyboardType="email-address"
+          autoCapitalize="none"
         />
         <TextInput
           placeholder="Password"
@@ -70,12 +67,19 @@ export default function AuthScreen() {
           placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'}
         />
         {error && <Text style={styles.error}>{error}</Text>}
-        <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-          <Text style={styles.buttonText}>Sign Up</Text>
-        </TouchableOpacity>
+        
         <TouchableOpacity style={styles.button} onPress={handleSignIn}>
           <Text style={styles.buttonText}>Sign In</Text>
         </TouchableOpacity>
+
+        <View style={styles.signupContainer}>
+          <Text style={[styles.signupText, isDark && styles.signupTextDark]}>
+            Don't have an account?
+          </Text>
+          <TouchableOpacity onPress={navigateToSignUp}>
+            <Text style={styles.signupLink}>Sign Up</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.dividerContainer}>
           <View style={[styles.divider, isDark && styles.dividerDark]} />
@@ -87,7 +91,7 @@ export default function AuthScreen() {
           style={[styles.getStartedButton, isDark && styles.getStartedButtonDark]}
           onPress={handleGetStarted}
         >
-          <Text style={styles.getStartedText}>Get Started</Text>
+          <Text style={styles.getStartedText}>Continue as Guest</Text>
         </TouchableOpacity>
         <Text style={[styles.disclaimer, isDark && styles.disclaimerDark]}>
           No account required. Some features may be limited.
@@ -122,12 +126,21 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 10,
     textAlign: 'center',
     color: '#111827',
   },
   titleDark: {
     color: '#F9FAFB',
+  },
+  subtitle: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#4B5563',
+  },
+  subtitleDark: {
+    color: '#9CA3AF',
   },
   input: {
     height: 50,
@@ -159,6 +172,23 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  signupContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  signupText: {
+    color: '#4B5563',
+    marginRight: 5,
+  },
+  signupTextDark: {
+    color: '#9CA3AF',
+  },
+  signupLink: {
+    color: '#6366F1',
     fontWeight: 'bold',
   },
   dividerContainer: {

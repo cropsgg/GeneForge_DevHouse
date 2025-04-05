@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { CircleAlert as AlertCircle, AlertTriangle, Flag } from 'lucide-react-native';
+import { CircleAlert as AlertCircle } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   View,
@@ -9,104 +9,72 @@ import {
   ScrollView,
   TextInput,
   Platform,
-  ViewStyle,
-  TextStyle,
   Alert,
 } from 'react-native';
 
 import { useTheme } from '../context/ThemeContext';
 
-// Configuration for the ML model API
-// Change this to your local machine's IP address when testing
-// Use 10.0.2.2 for Android emulator to access host machine's localhost
-// Use localhost for iOS simulator
-const API_BASE_URL = Platform.select({
-  ios: 'http://localhost:5000',
-  android: 'http://10.0.2.2:5000',
-  default: 'http://localhost:5000',
-});
-
-const diseases = [
-  'Cystic Fibrosis',
-  'Sickle Cell Disease',
-  "Huntington's Disease",
-  'Duchenne Muscular Dystrophy',
-  'Beta Thalassemia',
-];
-
-// Interface for the ML model's response
+// Interface for the prediction response
 interface PredictionResponse {
   originalSequence: string;
   editedSequence: string;
+  changeIndicator: string; // Shows which positions were changed
   efficiency: number;
-  offTargets: { site: string; risk: 'high' | 'medium' }[];
-  therapeuticSummary: string;
 }
 
 export default function PredictScreen() {
   const { isDark } = useTheme();
 
-  const [selectedDisease, setSelectedDisease] = useState('');
-  const [targetSequence, setTargetSequence] = useState('');
-  const [pamSequence, setPamSequence] = useState('');
-  const [guideRNA, setGuideRNA] = useState('');
-  const [donorTemplate, setDonorTemplate] = useState('');
-  const [cellType, setCellType] = useState('');
+  const [dnaSequence, setDnaSequence] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [predictionResult, setPredictionResult] = useState<PredictionResponse | null>(null);
 
-  /**
-   * Makes a prediction request to the Python ML model via Flask API
-   * The Flask server should be running locally with the following endpoints:
-   *
-   * POST /api/predict
-   * Request body: {
-   *   disease?: string;
-   *   targetSequence?: string;
-   *   pamSequence?: string;
-   *   guideRNA?: string;
-   *   donorTemplate?: string;
-   *   cellType?: string;
-   * }
-   *
-   * Response body: PredictionResponse
-   */
-  const makePrediction = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/predict`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          disease: selectedDisease,
-          targetSequence,
-          pamSequence,
-          guideRNA,
-          donorTemplate,
-          cellType,
-        }),
-      });
+  // Validate DNA sequence (only A, T, C, G allowed)
+  const validateDnaSequence = (sequence: string): boolean => {
+    return /^[ATCG]{20}$/.test(sequence);
+  };
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result as PredictionResponse;
-    } catch (error) {
-      console.error('Prediction error:', error);
-      throw error;
+  // Mock prediction function (will be replaced with API call later)
+  const makePrediction = async (sequence: string): Promise<PredictionResponse> => {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Create mock edited sequence (change 2-3 random positions)
+    const originalArray = sequence.split('');
+    const editedArray = [...originalArray];
+    const bases = ['A', 'T', 'C', 'G'];
+    const changeIndicator = Array(sequence.length).fill('.');
+    
+    // Change 2-3 random positions
+    const numChanges = Math.floor(Math.random() * 2) + 2; // 2-3 changes
+    for (let i = 0; i < numChanges; i++) {
+      const position = Math.floor(Math.random() * sequence.length);
+      const currentBase = editedArray[position];
+      // Filter out the current base to ensure we change it
+      const possibleBases = bases.filter(base => base !== currentBase);
+      const newBase = possibleBases[Math.floor(Math.random() * possibleBases.length)];
+      editedArray[position] = newBase;
+      changeIndicator[position] = '*'; // Mark changed position
     }
+    
+    return {
+      originalSequence: sequence,
+      editedSequence: editedArray.join(''),
+      changeIndicator: changeIndicator.join(''),
+      efficiency: Math.floor(Math.random() * 41) + 60, // Random efficiency between 60-100%
+    };
   };
 
   const handleSubmit = async () => {
-    if (
-      !selectedDisease &&
-      (!targetSequence || !pamSequence || !guideRNA || !donorTemplate || !cellType)
-    ) {
-      setError('Please select a disease or fill in all required fields');
+    // Validate input
+    if (!dnaSequence) {
+      setError('Please enter a DNA sequence');
+      return;
+    }
+    
+    if (!validateDnaSequence(dnaSequence)) {
+      setError('DNA sequence must be exactly 20 characters and contain only A, T, C, G');
       return;
     }
 
@@ -114,14 +82,14 @@ export default function PredictScreen() {
     setLoading(true);
 
     try {
-      // Call the Python ML model API
-      const result = await makePrediction();
+      // Generate mock prediction result
+      const result = await makePrediction(dnaSequence);
       setPredictionResult(result);
     } catch (error) {
-      setError('Failed to get prediction. Please check if the ML server is running.');
+      setError('Failed to generate prediction');
       Alert.alert(
         'Error',
-        'Failed to connect to the ML server. Make sure the Python Flask server is running on your local machine.',
+        'Failed to generate prediction',
         [{ text: 'OK' }]
       );
     } finally {
@@ -140,7 +108,7 @@ export default function PredictScreen() {
       >
         <Text style={[styles.title, isDark && styles.textDark]}>CRISPR-Cas9 Edit Prediction</Text>
         <Text style={[styles.subtitle, isDark && styles.textDark]}>
-          Select a disease or enter the required parameters for CRISPR-Cas9 gene editing prediction
+          Enter a DNA sequence to predict CRISPR-Cas9 gene editing results
         </Text>
       </LinearGradient>
 
@@ -156,91 +124,19 @@ export default function PredictScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Input Parameters</Text>
 
-          <Text style={[styles.sectionSubtitle, isDark && styles.textDark]}>Select Disease</Text>
-          <View style={styles.diseaseList}>
-            {diseases.map(disease => (
-              <TouchableOpacity
-                key={disease}
-                style={[
-                  styles.diseaseItem,
-                  selectedDisease === disease && styles.selectedDisease,
-                  isDark && styles.diseaseItemDark,
-                  selectedDisease === disease && isDark && styles.selectedDiseaseDark,
-                ]}
-                onPress={() => setSelectedDisease(disease)}
-              >
-                <Text
-                  style={[
-                    styles.diseaseText,
-                    selectedDisease === disease && styles.selectedDiseaseText,
-                    isDark && styles.textDark,
-                    selectedDisease === disease && isDark && styles.selectedDiseaseTextDark,
-                  ]}
-                >
-                  {disease}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <Text style={[styles.sectionSubtitle, isDark && styles.textDark]}>
-            Or Enter Manual Parameters
+          <Text style={[styles.inputLabel, isDark && styles.textDark]}>DNA Sequence (20 characters)</Text>
+          <TextInput
+            style={[styles.input, isDark && styles.inputDark]}
+            placeholder="Enter DNA sequence (e.g., ATCGATCGATCGATCGATCG)"
+            placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'}
+            value={dnaSequence}
+            onChangeText={(text) => setDnaSequence(text.toUpperCase())}
+            autoCapitalize="characters"
+            maxLength={20}
+          />
+          <Text style={[styles.helperText, isDark && styles.helperTextDark]}>
+            Only A, T, C, G letters are allowed. Exactly 20 characters required.
           </Text>
-
-          <Text style={[styles.inputLabel, isDark && styles.textDark]}>Target DNA Sequence</Text>
-          <TextInput
-            style={[styles.input, isDark && styles.inputDark]}
-            placeholder="Enter target DNA sequence (e.g., ATCGATCGATCGATCG)"
-            placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'}
-            value={targetSequence}
-            onChangeText={setTargetSequence}
-            multiline
-            numberOfLines={3}
-          />
-
-          <Text style={[styles.inputLabel, isDark && styles.textDark]}>PAM Sequence</Text>
-          <TextInput
-            style={[styles.input, isDark && styles.inputDark]}
-            placeholder="Enter PAM sequence (e.g., NGG)"
-            placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'}
-            value={pamSequence}
-            onChangeText={setPamSequence}
-            multiline
-            numberOfLines={2}
-          />
-
-          <Text style={[styles.inputLabel, isDark && styles.textDark]}>Guide RNA Sequence</Text>
-          <TextInput
-            style={[styles.input, isDark && styles.inputDark]}
-            placeholder="Enter guide RNA sequence"
-            placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'}
-            value={guideRNA}
-            onChangeText={setGuideRNA}
-            multiline
-            numberOfLines={3}
-          />
-
-          <Text style={[styles.inputLabel, isDark && styles.textDark]}>Donor Template</Text>
-          <TextInput
-            style={[styles.input, isDark && styles.inputDark]}
-            placeholder="Enter donor template sequence for homology-directed repair"
-            placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'}
-            value={donorTemplate}
-            onChangeText={setDonorTemplate}
-            multiline
-            numberOfLines={3}
-          />
-
-          <Text style={[styles.inputLabel, isDark && styles.textDark]}>Cell Type</Text>
-          <TextInput
-            style={[styles.input, isDark && styles.inputDark]}
-            placeholder="Enter target cell type (e.g., HEK293, HeLa)"
-            placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'}
-            value={cellType}
-            onChangeText={setCellType}
-            multiline
-            numberOfLines={2}
-          />
 
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
@@ -259,60 +155,48 @@ export default function PredictScreen() {
             <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Prediction Results</Text>
 
             {/* Gene Editor */}
-            <View style={styles.resultCard}>
-              <Text style={[styles.resultTitle, isDark && styles.textDark]}>Gene Editor</Text>
-              <View style={styles.sequenceContainer}>
-                <Text style={[styles.sequenceLabel, isDark && styles.textDark]}>Original:</Text>
-                <Text style={[styles.sequence, isDark && styles.textDark]}>
+            <View style={[styles.resultCard, isDark && styles.resultCardDark]}>
+              <Text style={[styles.resultTitle, isDark && styles.textDark]}>Gene Edit Results</Text>
+              <View style={[styles.sequenceContainer, isDark && styles.sequenceContainerDark]}>
+                <Text style={[styles.sequenceLabel, isDark && styles.sequenceLabelDark]}>Original:</Text>
+                <Text style={[styles.sequence, isDark && styles.sequenceDark]}>
                   {predictionResult.originalSequence}
                 </Text>
-                <Text style={[styles.sequenceLabel, isDark && styles.textDark]}>Edited:</Text>
-                <Text style={[styles.sequence, isDark && styles.textDark]}>
-                  {predictionResult.editedSequence}
-                </Text>
+                
+                <Text style={[styles.sequenceLabel, isDark && styles.sequenceLabelDark]}>Edited:</Text>
+                <View style={styles.editedSequenceContainer}>
+                  {predictionResult.editedSequence.split('').map((char, index) => {
+                    const isChanged = predictionResult.changeIndicator[index] === '*';
+                    return (
+                      <Text
+                        key={index}
+                        style={[
+                          styles.sequenceChar,
+                          isDark && styles.sequenceDark,
+                          isChanged && styles.changedChar,
+                        ]}
+                      >
+                        {char}
+                      </Text>
+                    );
+                  })}
+                </View>
               </View>
             </View>
 
             {/* Efficiency Gauge */}
-            <View style={styles.resultCard}>
+            <View style={[styles.resultCard, isDark && styles.resultCardDark]}>
               <Text style={[styles.resultTitle, isDark && styles.textDark]}>Efficiency Gauge</Text>
               <View style={styles.gaugeContainer}>
                 <Text style={[styles.efficiencyText, isDark && styles.textDark]}>
                   {predictionResult.efficiency}% Success Probability
                 </Text>
-                <View style={styles.gauge}>
+                <View style={[styles.gauge, isDark && styles.gaugeDark]}>
                   <View
                     style={[styles.gaugeProgress, { width: `${predictionResult.efficiency}%` }]}
                   />
                 </View>
               </View>
-            </View>
-
-            {/* Off-Target Alerts */}
-            <View style={styles.resultCard}>
-              <Text style={[styles.resultTitle, isDark && styles.textDark]}>Off-Target Alerts</Text>
-              {predictionResult.offTargets.map((target, index) => (
-                <View key={index} style={styles.offTargetItem}>
-                  {target.risk === 'high' ? (
-                    <AlertTriangle color="#EF4444" size={20} />
-                  ) : (
-                    <Flag color="#F59E0B" size={20} />
-                  )}
-                  <Text style={[styles.offTargetText, isDark && styles.textDark]}>
-                    {target.site} - {target.risk === 'high' ? 'High' : 'Medium'} Risk
-                  </Text>
-                </View>
-              ))}
-            </View>
-
-            {/* Therapeutic Report */}
-            <View style={styles.resultCard}>
-              <Text style={[styles.resultTitle, isDark && styles.textDark]}>
-                Therapeutic Report
-              </Text>
-              <Text style={[styles.reportText, isDark && styles.textDark]}>
-                {predictionResult.therapeuticSummary}
-              </Text>
             </View>
           </View>
         )}
@@ -363,47 +247,11 @@ const styles = StyleSheet.create({
     color: '#111827',
     marginBottom: 20,
   },
-  sectionSubtitle: {
-    fontSize: 18,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#111827',
-    marginBottom: 12,
-    marginTop: 20,
-  },
   inputLabel: {
     fontSize: 16,
     fontFamily: 'Inter_500Medium',
     color: '#111827',
     marginBottom: 8,
-  },
-  diseaseList: {
-    marginBottom: 20,
-  },
-  diseaseItem: {
-    padding: 16,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    marginBottom: 8,
-  },
-  diseaseItemDark: {
-    backgroundColor: '#1F2937',
-  },
-  selectedDisease: {
-    backgroundColor: '#6366F1',
-  },
-  selectedDiseaseDark: {
-    backgroundColor: '#4F46E5',
-  },
-  diseaseText: {
-    fontSize: 16,
-    fontFamily: 'Inter_500Medium',
-    color: '#111827',
-  },
-  selectedDiseaseText: {
-    color: '#FFFFFF',
-  },
-  selectedDiseaseTextDark: {
-    color: '#FFFFFF',
   },
   input: {
     backgroundColor: '#F3F4F6',
@@ -411,14 +259,24 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
-    minHeight: 120,
-    textAlignVertical: 'top',
-    marginBottom: 24,
+    minHeight: 60,
+    textAlignVertical: 'center',
+    marginBottom: 8,
     color: '#111827',
+    letterSpacing: 2,
   },
   inputDark: {
     backgroundColor: '#1F2937',
     color: '#F9FAFB',
+  },
+  helperText: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#6B7280',
+    marginBottom: 24,
+  },
+  helperTextDark: {
+    color: '#9CA3AF',
   },
   button: {
     backgroundColor: '#6366F1',
@@ -454,6 +312,9 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 16,
   },
+  resultCardDark: {
+    backgroundColor: '#1F2937',
+  },
   resultTitle: {
     fontSize: 18,
     fontFamily: 'Inter_600SemiBold',
@@ -465,18 +326,48 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
   },
+  sequenceContainerDark: {
+    backgroundColor: '#111827',
+  },
   sequenceLabel: {
     fontSize: 14,
     fontFamily: 'Inter_500Medium',
     color: '#6B7280',
     marginBottom: 4,
   },
+  sequenceLabelDark: {
+    color: '#9CA3AF',
+  },
   sequence: {
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
     color: '#111827',
     marginBottom: 12,
-    letterSpacing: 1,
+    letterSpacing: 2,
+    fontWeight: '500',
+  },
+  sequenceDark: {
+    color: '#F9FAFB',
+  },
+  editedSequenceContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 12,
+  },
+  sequenceChar: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#111827',
+    fontWeight: '500',
+    letterSpacing: 2,
+  },
+  changedChar: {
+    color: '#6366F1',
+    fontWeight: 'bold',
+    backgroundColor: '#EEF2FF',
+    borderRadius: 4,
+    overflow: 'hidden',
+    paddingHorizontal: 1,
   },
   gaugeContainer: {
     alignItems: 'center',
@@ -494,87 +385,12 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     overflow: 'hidden',
   },
+  gaugeDark: {
+    backgroundColor: '#374151',
+  },
   gaugeProgress: {
     height: '100%',
     backgroundColor: '#6366F1',
     borderRadius: 6,
   },
-  offTargetItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-  },
-  offTargetText: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-    color: '#111827',
-    marginLeft: 8,
-  },
-  reportText: {
-    fontSize: 16,
-    fontFamily: 'Inter_400Regular',
-    color: '#111827',
-    lineHeight: 24,
-  },
 });
-
-/*
-Python Flask Server Setup Instructions:
-
-1. Create a new directory for the ML server:
-   mkdir ml_server
-   cd ml_server
-
-2. Create a virtual environment and install dependencies:
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install flask flask-cors torch numpy pandas scikit-learn
-
-3. Create server.py with this basic structure:
-
-   from flask import Flask, request, jsonify
-   from flask_cors import CORS
-   import torch
-   # Import your ML model and preprocessing functions here
-
-   app = Flask(__name__)
-   CORS(app)
-
-   # Load your ML model here
-   # model = YourModel.load('path/to/model')
-
-   @app.route('/api/predict', methods=['POST'])
-   def predict():
-       data = request.json
-       
-       # Process input data
-       # Make prediction using your model
-       # Format response according to PredictionResponse interface
-       
-       result = {
-           'originalSequence': data.get('targetSequence', ''),
-           'editedSequence': 'EDITED_SEQUENCE',
-           'efficiency': 85.5,
-           'offTargets': [
-               {'site': 'chr7:145,789,543', 'risk': 'high'},
-               {'site': 'chr12:78,901,234', 'risk': 'medium'}
-           ],
-           'therapeuticSummary': 'Prediction summary...'
-       }
-       
-       return jsonify(result)
-
-   if __name__ == '__main__':
-       app.run(debug=True)
-
-4. Run the Flask server:
-   python server.py
-
-The server will start on http://localhost:5000
-
-Note: When running on a physical device, replace localhost with your computer's
-local IP address in API_BASE_URL above.
-*/
