@@ -40,23 +40,20 @@ export default function PredictScreen() {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Create mock edited sequence (change 2-3 random positions)
+    // Create mock edited sequence (change only 1 random position)
     const originalArray = sequence.split('');
     const editedArray = [...originalArray];
     const bases = ['A', 'T', 'C', 'G'];
     const changeIndicator = Array(sequence.length).fill('.');
     
-    // Change 2-3 random positions
-    const numChanges = Math.floor(Math.random() * 2) + 2; // 2-3 changes
-    for (let i = 0; i < numChanges; i++) {
-      const position = Math.floor(Math.random() * sequence.length);
-      const currentBase = editedArray[position];
-      // Filter out the current base to ensure we change it
-      const possibleBases = bases.filter(base => base !== currentBase);
-      const newBase = possibleBases[Math.floor(Math.random() * possibleBases.length)];
-      editedArray[position] = newBase;
-      changeIndicator[position] = '*'; // Mark changed position
-    }
+    // Change only 1 random position
+    const position = Math.floor(Math.random() * sequence.length);
+    const currentBase = editedArray[position];
+    // Filter out the current base to ensure we change it
+    const possibleBases = bases.filter(base => base !== currentBase);
+    const newBase = possibleBases[Math.floor(Math.random() * possibleBases.length)];
+    editedArray[position] = newBase;
+    changeIndicator[position] = '*'; // Mark changed position
     
     return {
       originalSequence: sequence,
@@ -109,7 +106,7 @@ export default function PredictScreen() {
         <Text style={[styles.title, isDark && styles.textDark ]}>Gene Editing Prediction</Text>
         
         <Text style={[styles.modelDescription, isDark && styles.textDark]}>
-          Fixing DNA, one base at a time - smarter, faster, BERter
+          Fixing DNA, one base at a time - smarter, faster, 
         </Text>
       </LinearGradient>
 
@@ -182,6 +179,23 @@ export default function PredictScreen() {
                     );
                   })}
                 </View>
+                
+                {/* Position indicator for changed base */}
+                {predictionResult.changeIndicator.includes('*') && (
+                  <View style={[
+                    styles.positionInfoContainer, 
+                    isDark && styles.positionInfoContainerDark
+                  ]}>
+                    <Text style={[styles.sequenceLabel, isDark && styles.sequenceLabelDark]}>
+                      Changed Position:
+                    </Text>
+                    <Text style={[styles.positionText, isDark && styles.textDark]}>
+                      Position {predictionResult.changeIndicator.indexOf('*') + 1} 
+                      ({predictionResult.originalSequence[predictionResult.changeIndicator.indexOf('*')]} → 
+                      {predictionResult.editedSequence[predictionResult.changeIndicator.indexOf('*')]})
+                    </Text>
+                  </View>
+                )}
               </View>
             </View>
 
@@ -403,5 +417,20 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#6366F1',
     borderRadius: 6,
+  },
+  positionInfoContainer: {
+    marginTop: 12,
+    padding: 8,
+    backgroundColor: '#EEF2FF',
+    borderRadius: 8,
+  },
+  positionInfoContainerDark: {
+    backgroundColor: '#1E293B', // Dark blue background for dark mode
+  },
+  positionText: {
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    color: '#4F46E5',
+    marginTop: 4,
   },
 });
