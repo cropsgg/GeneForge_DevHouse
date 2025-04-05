@@ -92,7 +92,7 @@ export default function HomeScreen() {
         />
         <Animated.View entering={FadeInDown.duration(1000).delay(200)} style={headerContentStyle}>
           <Text style={[styles.title, isDark && styles.titleDark] as StyleProp<TextStyle>}>
-            GeneEdit AI
+            GeneForge
           </Text>
           <Text style={[styles.subtitle, isDark && styles.subtitleDark] as StyleProp<TextStyle>}>
             Advanced Gene Editing with Predictive Analytics

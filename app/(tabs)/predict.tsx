@@ -106,9 +106,10 @@ export default function PredictScreen() {
         colors={isDark ? ['#1F2937', '#111827'] : ['#F9FAFB', '#F3F4F6']}
         style={styles.header}
       >
-        <Text style={[styles.title, isDark && styles.textDark]}>CRISPR-Cas9 Edit Prediction</Text>
-        <Text style={[styles.subtitle, isDark && styles.textDark]}>
-          Enter a DNA sequence to predict CRISPR-Cas9 gene editing results
+        <Text style={[styles.title, isDark && styles.textDark ]}>Gene Editing Prediction</Text>
+        
+        <Text style={[styles.modelDescription, isDark && styles.textDark]}>
+          Fixing DNA, one base at a time - smarter, faster, BERter
         </Text>
       </LinearGradient>
 
@@ -228,12 +229,22 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_700Bold',
     color: '#111827',
     marginBottom: 8,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
     color: '#4B5563',
     lineHeight: 24,
+  },
+  modelDescription: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#6B7280',
+    lineHeight: 20,
+    marginTop: 8,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
   textDark: {
     color: '#F9FAFB',
