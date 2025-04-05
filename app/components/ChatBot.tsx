@@ -1,15 +1,15 @@
+import { Send } from 'lucide-react-native';
 import React, { useState, useRef } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, Text } from 'react-native';
-import { useTheme } from '../context/ThemeContext';
-import { Send } from 'lucide-react-native';
-import Markdown from 'react-native-markdown-renderer';
-;
+import Markdown from 'react-native-markdown-display';
 import { Together } from 'together-ai';
+
+import { useTheme } from '../context/ThemeContext';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
-  timestamp: string;  // Add this line
+  timestamp: string; // Add this line
 }
 
 export const ChatBot = () => {
@@ -31,10 +31,10 @@ export const ChatBot = () => {
     }
 
     // Always create user message even if empty
-    const userMessage: Message = { 
-      role: 'user', 
+    const userMessage: Message = {
+      role: 'user',
       content: input,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     if (input.trim()) {
@@ -46,40 +46,51 @@ export const ChatBot = () => {
 
     try {
       const response = await together.chat.completions.create({
-        messages: [{ 
-          role: "user", 
-          content: "You are an expert AI assistant for our CRISPR gene editing platform. Answer only questions related to CRISPR, gene editing, AI-driven predictions, and our platform’s features. Keep responses clear, precise, and professional. If a question is unrelated, reply with: 'I specialize in CRISPR and AI-powered gene editing. Please ask relevant questions."  }, ...messages],
-        model: "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+        messages: [
+          {
+            role: 'user',
+            content:
+              "You are an expert AI assistant for our CRISPR gene editing platform. Answer only questions related to CRISPR, gene editing, AI-driven predictions, and our platform's features. Keep responses clear, precise, and professional. If a question is unrelated, reply with: 'I specialize in CRISPR and AI-powered gene editing. Please ask relevant questions.",
+          },
+          ...messages,
+        ],
+        model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo-Free',
         temperature: 0.7,
         top_p: 0.7,
         top_k: 50,
         repetition_penalty: 1,
-        stop: ["<|eot_id|>", "<|eom_id|>"],
-        stream: true
+        stop: ['<|eot_id|>', '<|eom_id|>'],
+        stream: true,
       });
 
-      let aiResponseContent = "";
+      let aiResponseContent = '';
       for await (const token of response) {
-        aiResponseContent += token.choices[0]?.delta?.content || "";
+        aiResponseContent += token.choices[0]?.delta?.content || '';
         // Update message in real-time for streaming effect
         setMessages(prev => {
           const lastMessage = prev[prev.length - 1];
           if (lastMessage?.role === 'assistant') {
-            return [...prev.slice(0, -1), {
-              ...lastMessage,
-              content: aiResponseContent
-            }];
+            return [
+              ...prev.slice(0, -1),
+              {
+                ...lastMessage,
+                content: aiResponseContent,
+              },
+            ];
           }
-          return [...prev, {
-            role: 'assistant',
-            content: aiResponseContent,
-            timestamp: new Date().toISOString()
-          }];
+          return [
+            ...prev,
+            {
+              role: 'assistant',
+              content: aiResponseContent,
+              timestamp: new Date().toISOString(),
+            },
+          ];
         });
       }
 
       if (!aiResponseContent.trim()) {
-        console.warn("Received empty response from AI");
+        console.warn('Received empty response from AI');
       }
     } catch (error) {
       console.error('Chat error:', error);
@@ -88,7 +99,7 @@ export const ChatBot = () => {
         {
           role: 'assistant',
           content: 'Sorry, I encountered an error. Please try again.',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         },
       ]);
     } finally {
@@ -105,13 +116,12 @@ export const ChatBot = () => {
           </Text>
         </View>
       )}
-      
+
       <ScrollView
         ref={scrollViewRef}
         style={styles.messagesContainer}
-        onContentSizeChange={() =>
-          scrollViewRef.current?.scrollToEnd({ animated: true })
-        }>
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+      >
         {messages.map((msg, index) => (
           <View
             key={index}
@@ -120,19 +130,15 @@ export const ChatBot = () => {
               msg.role === 'user'
                 ? [styles.userMessage, isDark && styles.userMessageDark]
                 : [styles.assistantMessage, isDark && styles.assistantMessageDark],
-            ]}>
-            <Text >
-                {msg.role === 'user' ? `You: ${msg.content}` : msg.content}
-            </Text>
+            ]}
+          >
+            <Text>{msg.role === 'user' ? `You: ${msg.content}` : msg.content}</Text>
           </View>
         ))}
         {isLoading && (
           <View
-            style={[
-              styles.message,
-              styles.assistantMessage,
-              isDark && styles.assistantMessageDark,
-            ]}>
+            style={[styles.message, styles.assistantMessage, isDark && styles.assistantMessageDark]}
+          >
             <Text>Thinking...</Text>
           </View>
         )}
@@ -140,20 +146,14 @@ export const ChatBot = () => {
 
       <View style={styles.inputContainer}>
         <TextInput
-          style={[
-            styles.input,
-            isDark && styles.inputDark,
-          ]}
+          style={[styles.input, isDark && styles.inputDark]}
           value={input}
           onChangeText={setInput}
           placeholder="Ask about gene editing..."
           placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'}
           multiline
         />
-        <TouchableOpacity
-          style={styles.sendButton}
-          onPress={handleSend}
-          disabled={isLoading}>
+        <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={isLoading}>
           <Send size={20} color={isDark ? '#FFFFFF' : '#111827'} />
         </TouchableOpacity>
       </View>

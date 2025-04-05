@@ -1,10 +1,11 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import React, { useState, useContext } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+
 import { signUp, signIn } from './auth/auth';
-import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from './context/ThemeContext';
 import { AuthContext } from './context/AuthContext';
+import { useTheme } from './context/ThemeContext';
 
 export default function AuthScreen() {
   const [email, setEmail] = useState('');
@@ -20,6 +21,7 @@ export default function AuthScreen() {
       setError(error.message);
       Alert.alert('Sign Up Error', error.message);
     } else {
+      // eslint-disable-next-line no-console
       console.log('User signed up:', user);
       setUser(user);
       router.push('/');
@@ -32,6 +34,7 @@ export default function AuthScreen() {
       setError(error.message);
       Alert.alert('Sign In Error', error.message);
     } else {
+      // eslint-disable-next-line no-console
       console.log('User signed in:', user);
       setUser(user);
       router.push('/');
@@ -73,15 +76,15 @@ export default function AuthScreen() {
         <TouchableOpacity style={styles.button} onPress={handleSignIn}>
           <Text style={styles.buttonText}>Sign In</Text>
         </TouchableOpacity>
-        
+
         <View style={styles.dividerContainer}>
           <View style={[styles.divider, isDark && styles.dividerDark]} />
           <Text style={[styles.dividerText, isDark && styles.dividerTextDark]}>OR</Text>
           <View style={[styles.divider, isDark && styles.dividerDark]} />
         </View>
-        
-        <TouchableOpacity 
-          style={[styles.getStartedButton, isDark && styles.getStartedButtonDark]} 
+
+        <TouchableOpacity
+          style={[styles.getStartedButton, isDark && styles.getStartedButtonDark]}
           onPress={handleGetStarted}
         >
           <Text style={styles.getStartedText}>Get Started</Text>
@@ -203,4 +206,4 @@ const styles = StyleSheet.create({
   disclaimerDark: {
     color: '#9CA3AF',
   },
-}); 
+});

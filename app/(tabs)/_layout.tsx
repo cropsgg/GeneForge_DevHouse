@@ -1,26 +1,46 @@
-import React, { useEffect, useState } from 'react';
-import { Tabs } from 'expo-router';
-import { Chrome as Home, Database, Settings, ActivityIcon, BarChart2, AlertCircle, MessageCircle } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
-import { Platform, StyleSheet, useColorScheme, View, Text, TouchableOpacity, Modal } from 'react-native';
-import { useTheme } from '../context/ThemeContext';
-import { Profiler } from 'react';
+import { Tabs } from 'expo-router';
+import {
+  Chrome as Home,
+  Database,
+  Settings,
+  ActivityIcon,
+  BarChart2,
+  AlertCircle,
+  MessageCircle,
+} from 'lucide-react-native';
+import React, { useEffect, useState, Profiler } from 'react';
+import {
+  Platform,
+  StyleSheet,
+  useColorScheme,
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+} from 'react-native';
+
 import { ChatBot } from '../components/ChatBot';
+import { useTheme } from '../context/ThemeContext';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const { isDark } = useTheme();
   const [isChatOpen, setIsChatOpen] = useState(false);
-  
+
   // Add logging to diagnose route issues
   useEffect(() => {
+    // eslint-disable-next-line no-console
     console.log('DEBUG: Tab Layout rendered, isDark =', isDark);
     // Log available tab routes
     try {
       const tabRoutes = ['index', 'predict', 'about', 'settings'];
+      // eslint-disable-next-line no-console
       console.log('DEBUG: Available tab routes:', tabRoutes);
+      // eslint-disable-next-line no-console
       console.log('DEBUG: Using colorScheme:', colorScheme);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.log('DEBUG: Error checking tab routes:', error);
     }
   }, [isDark, colorScheme]);
@@ -73,7 +93,7 @@ export default function TabLayout() {
             tabBarIcon: ({ color }) => <Settings size={22} color={color} />,
           }}
         />
-        
+
         {/* Comment out or remove any references to "profile" route */}
         {/* Tabs.Screen for ProfileScreen will go here if needed in the future */}
       </Tabs>
@@ -90,22 +110,21 @@ export default function TabLayout() {
       <Modal
         visible={isChatOpen}
         animationType="fade"
-        transparent={true}
+        transparent
         onRequestClose={() => setIsChatOpen(false)}
-        statusBarTranslucent={true}
+        statusBarTranslucent
       >
-        <TouchableOpacity 
-          style={styles.modalContainer} 
+        <TouchableOpacity
+          style={styles.modalContainer}
           activeOpacity={1}
           onPress={() => setIsChatOpen(false)}
         >
-          <TouchableOpacity 
-            activeOpacity={1}
-            onPress={(e) => e.stopPropagation()}
-          >
+          <TouchableOpacity activeOpacity={1} onPress={e => e.stopPropagation()}>
             <View style={[styles.modalContent, isDark && styles.modalContentDark]}>
               <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, isDark && styles.modalTitleDark]}>AI Assistant</Text>
+                <Text style={[styles.modalTitle, isDark && styles.modalTitleDark]}>
+                  AI Assistant
+                </Text>
                 <TouchableOpacity onPress={() => setIsChatOpen(false)}>
                   <Text style={[styles.closeButton, isDark && styles.closeButtonDark]}>✕</Text>
                 </TouchableOpacity>

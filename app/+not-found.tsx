@@ -1,6 +1,7 @@
-import React from 'react';
 import { Link, Stack } from 'expo-router';
+import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+
 import { useTheme } from './context/ThemeContext';
 
 export default function NotFoundScreen() {
@@ -8,23 +9,21 @@ export default function NotFoundScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ 
-        title: 'Oops!',
-        headerTitleStyle: {
-          color: isDark ? '#F9FAFB' : '#111827',
-        },
-        headerStyle: {
-          backgroundColor: isDark ? '#1F2937' : '#FFFFFF',
-        }
-      }} />
+      <Stack.Screen
+        options={{
+          title: 'Oops!',
+          headerTitleStyle: {
+            color: isDark ? '#F9FAFB' : '#111827',
+          },
+          headerStyle: {
+            backgroundColor: isDark ? '#1F2937' : '#FFFFFF',
+          },
+        }}
+      />
       <View style={[styles.container, isDark && styles.containerDark]}>
-        <Text style={[styles.text, isDark && styles.textDark]}>
-          This screen doesn't exist.
-        </Text>
+        <Text style={[styles.text, isDark && styles.textDark]}>This screen doesn't exist.</Text>
         <Link href="/" style={[styles.link, isDark && styles.linkDark]}>
-          <Text style={[styles.linkText, isDark && styles.linkTextDark]}>
-            Go to home screen!
-          </Text>
+          <Text style={[styles.linkText, isDark && styles.linkTextDark]}>Go to home screen!</Text>
         </Link>
       </View>
     </>

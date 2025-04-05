@@ -1,9 +1,21 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Platform, ViewStyle, TextStyle, StyleProp } from 'react-native';
-import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { ArrowRight, Dna, Brain, FlaskRound as Flask, Info } from 'lucide-react-native';
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+  Platform,
+  ViewStyle,
+  TextStyle,
+  StyleProp,
+} from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+
 import { useTheme } from '../context/ThemeContext';
 
 // Define typed styles for web platform
@@ -48,7 +60,10 @@ export default function HomeScreen() {
   // Use as any to bypass TypeScript errors for style props
   const containerStyle = [styles.container, isDark && styles.containerDark] as StyleProp<ViewStyle>;
   const headerContentStyle = styles.headerContent as StyleProp<ViewStyle>;
-  const buttonStyle = [styles.button, Platform.OS === 'web' && styles.buttonHover] as StyleProp<ViewStyle>;
+  const buttonStyle = [
+    styles.button,
+    Platform.OS === 'web' && styles.buttonHover,
+  ] as StyleProp<ViewStyle>;
   const infoCardStyle = [styles.infoCard, isDark && styles.infoCardDark] as StyleProp<ViewStyle>;
   const featureCardStyle = [
     styles.featureCard,
@@ -58,27 +73,27 @@ export default function HomeScreen() {
   const statCardStyle = [styles.statCard, isDark && styles.statCardDark] as StyleProp<ViewStyle>;
 
   return (
-    <ScrollView 
-      style={containerStyle}
-      showsVerticalScrollIndicator={false}
-    >
+    <ScrollView style={containerStyle} showsVerticalScrollIndicator={false}>
       <View style={styles.header as StyleProp<ViewStyle>}>
         <Image
-          source={{ uri: 'https://images.unsplash.com/photo-1637858868799-7f26a0640eb6?q=80&w=2940&auto=format&fit=crop' }}
+          source={{
+            uri: 'https://images.unsplash.com/photo-1637858868799-7f26a0640eb6?q=80&w=2940&auto=format&fit=crop',
+          }}
           style={StyleSheet.absoluteFill}
           accessibilityLabel="DNA structure background image"
         />
         <LinearGradient
-          colors={isDark 
-            ? ['rgba(17, 24, 39, 0.8)', 'rgba(17, 24, 39, 0.95)']
-            : ['rgba(255,255,255,0.8)', 'rgba(255,255,255,0.95)']}
+          colors={
+            isDark
+              ? ['rgba(17, 24, 39, 0.8)', 'rgba(17, 24, 39, 0.95)']
+              : ['rgba(255,255,255,0.8)', 'rgba(255,255,255,0.95)']
+          }
           style={StyleSheet.absoluteFill}
         />
-        <Animated.View 
-          entering={FadeInDown.duration(1000).delay(200)}
-          style={headerContentStyle}
-        >
-          <Text style={[styles.title, isDark && styles.titleDark] as StyleProp<TextStyle>}>GeneEdit AI</Text>
+        <Animated.View entering={FadeInDown.duration(1000).delay(200)} style={headerContentStyle}>
+          <Text style={[styles.title, isDark && styles.titleDark] as StyleProp<TextStyle>}>
+            GeneEdit AI
+          </Text>
           <Text style={[styles.subtitle, isDark && styles.subtitleDark] as StyleProp<TextStyle>}>
             Advanced Gene Editing with Predictive Analytics
           </Text>
@@ -89,7 +104,11 @@ export default function HomeScreen() {
             accessibilityHint="Navigate to gene analysis screen"
           >
             <Text style={styles.buttonText as StyleProp<TextStyle>}>Start Analysis</Text>
-            <ArrowRight size={20} color="#FFFFFF" style={styles.buttonIcon as StyleProp<ViewStyle>} />
+            <ArrowRight
+              size={20}
+              color="#FFFFFF"
+              style={styles.buttonIcon as StyleProp<ViewStyle>}
+            />
           </TouchableOpacity>
         </Animated.View>
       </View>
@@ -98,33 +117,47 @@ export default function HomeScreen() {
         <View style={infoCardStyle}>
           <Info size={24} color={isDark ? '#6366F1' : '#4F46E5'} />
           <Text style={[styles.infoText, isDark && styles.infoTextDark] as StyleProp<TextStyle>}>
-            Our AI-powered platform helps researchers predict optimal gene edits
-            for treating genetic disorders with unprecedented accuracy.
+            Our AI-powered platform helps researchers predict optimal gene edits for treating
+            genetic disorders with unprecedented accuracy.
           </Text>
         </View>
 
-        <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark] as StyleProp<TextStyle>}>
+        <Text
+          style={[styles.sectionTitle, isDark && styles.sectionTitleDark] as StyleProp<TextStyle>}
+        >
           Key Features
         </Text>
 
         {features.map((feature, index) => (
-          <Animated.View
-            key={index}
-            entering={FadeInUp.duration(600).delay(feature.delay)}
-          >
+          <Animated.View key={index} entering={FadeInUp.duration(600).delay(feature.delay)}>
             <TouchableOpacity
               style={featureCardStyle}
               accessibilityLabel={feature.title}
               accessibilityHint={feature.description}
             >
-              <View style={[styles.iconContainer, { backgroundColor: feature.color }] as StyleProp<ViewStyle>}>
+              <View
+                style={
+                  [styles.iconContainer, { backgroundColor: feature.color }] as StyleProp<ViewStyle>
+                }
+              >
                 <feature.icon size={24} color="#FFFFFF" />
               </View>
               <View style={styles.featureContent as StyleProp<ViewStyle>}>
-                <Text style={[styles.featureTitle, isDark && styles.featureTitleDark] as StyleProp<TextStyle>}>
+                <Text
+                  style={
+                    [styles.featureTitle, isDark && styles.featureTitleDark] as StyleProp<TextStyle>
+                  }
+                >
                   {feature.title}
                 </Text>
-                <Text style={[styles.featureDescription, isDark && styles.featureDescriptionDark] as StyleProp<TextStyle>}>
+                <Text
+                  style={
+                    [
+                      styles.featureDescription,
+                      isDark && styles.featureDescriptionDark,
+                    ] as StyleProp<TextStyle>
+                  }
+                >
                   {feature.description}
                 </Text>
               </View>
@@ -136,23 +169,21 @@ export default function HomeScreen() {
           {[
             { number: '99%', label: 'Accuracy' },
             { number: '50K+', label: 'Sequences' },
-            { number: '24/7', label: 'Analysis' }
+            { number: '24/7', label: 'Analysis' },
           ].map((stat, index) => {
             const cardStyles = [
               styles.statCard,
               isDark && styles.statCardDark,
-              index > 0 && styles.statCardMargin
+              index > 0 && styles.statCardMargin,
             ].filter(Boolean) as StyleProp<ViewStyle>;
 
-            const numberStyles = [
-              styles.statNumber,
-              isDark && styles.statNumberDark
-            ].filter(Boolean) as StyleProp<TextStyle>;
+            const numberStyles = [styles.statNumber, isDark && styles.statNumberDark].filter(
+              Boolean
+            ) as StyleProp<TextStyle>;
 
-            const labelStyles = [
-              styles.statLabel,
-              isDark && styles.statLabelDark
-            ].filter(Boolean) as StyleProp<TextStyle>;
+            const labelStyles = [styles.statLabel, isDark && styles.statLabelDark].filter(
+              Boolean
+            ) as StyleProp<TextStyle>;
 
             return (
               <Animated.View
@@ -161,18 +192,10 @@ export default function HomeScreen() {
                 style={cardStyles}
               >
                 <View style={styles.statContent as StyleProp<ViewStyle>}>
-                  <Text 
-                    style={numberStyles}
-                    adjustsFontSizeToFit
-                    numberOfLines={1}
-                  >
+                  <Text style={numberStyles} adjustsFontSizeToFit numberOfLines={1}>
                     {stat.number}
                   </Text>
-                  <Text 
-                    style={labelStyles}
-                    adjustsFontSizeToFit
-                    numberOfLines={1}
-                  >
+                  <Text style={labelStyles} adjustsFontSizeToFit numberOfLines={1}>
                     {stat.label}
                   </Text>
                 </View>
@@ -236,17 +259,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 12,
     alignSelf: 'flex-start',
-    ...(Platform.OS === 'web' ? {
-      cursor: 'pointer',
-      transition: 'transform 0.2s, background-color 0.2s',
-    } : {}),
+    ...(Platform.OS === 'web'
+      ? {
+          cursor: 'pointer',
+          transition: 'transform 0.2s, background-color 0.2s',
+        }
+      : {}),
   } as StyleWithWeb,
-  buttonHover: Platform.OS === 'web' ? {
-    ':hover': {
-      backgroundColor: '#4F46E5',
-      transform: 'translateY(-2px)',
-    } as any,
-  } as any : {},
+  buttonHover:
+    Platform.OS === 'web'
+      ? ({
+          ':hover': {
+            backgroundColor: '#4F46E5',
+            transform: 'translateY(-2px)',
+          } as any,
+        } as any)
+      : {},
   buttonText: {
     color: '#FFFFFF',
     fontSize: 18,
@@ -296,20 +324,25 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
-    ...(Platform.OS === 'web' ? {
-      cursor: 'pointer',
-      transition: 'transform 0.2s, box-shadow 0.2s',
-    } : {}),
+    ...(Platform.OS === 'web'
+      ? {
+          cursor: 'pointer',
+          transition: 'transform 0.2s, box-shadow 0.2s',
+        }
+      : {}),
   } as StyleWithWeb,
   featureCardDark: {
     backgroundColor: '#1F2937',
   } as StyleWithWeb,
-  featureCardHover: Platform.OS === 'web' ? {
-    ':hover': {
-      transform: 'translateY(-2px)',
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-    } as any,
-  } as any : {},
+  featureCardHover:
+    Platform.OS === 'web'
+      ? ({
+          ':hover': {
+            transform: 'translateY(-2px)',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          } as any,
+        } as any)
+      : {},
   iconContainer: {
     width: 48,
     height: 48,

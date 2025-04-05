@@ -1,3 +1,5 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { CircleAlert as AlertCircle, AlertTriangle, Flag } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   View,
@@ -11,8 +13,7 @@ import {
   TextStyle,
   Alert,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { CircleAlert as AlertCircle, AlertTriangle, Flag } from 'lucide-react-native';
+
 import { useTheme } from '../context/ThemeContext';
 
 // Configuration for the ML model API
@@ -28,7 +29,7 @@ const API_BASE_URL = Platform.select({
 const diseases = [
   'Cystic Fibrosis',
   'Sickle Cell Disease',
-  'Huntington\'s Disease',
+  "Huntington's Disease",
   'Duchenne Muscular Dystrophy',
   'Beta Thalassemia',
 ];
@@ -38,13 +39,13 @@ interface PredictionResponse {
   originalSequence: string;
   editedSequence: string;
   efficiency: number;
-  offTargets: Array<{ site: string; risk: 'high' | 'medium' }>;
+  offTargets: { site: string; risk: 'high' | 'medium' }[];
   therapeuticSummary: string;
 }
 
 export default function PredictScreen() {
   const { isDark } = useTheme();
-  
+
   const [selectedDisease, setSelectedDisease] = useState('');
   const [targetSequence, setTargetSequence] = useState('');
   const [pamSequence, setPamSequence] = useState('');
@@ -58,7 +59,7 @@ export default function PredictScreen() {
   /**
    * Makes a prediction request to the Python ML model via Flask API
    * The Flask server should be running locally with the following endpoints:
-   * 
+   *
    * POST /api/predict
    * Request body: {
    *   disease?: string;
@@ -68,7 +69,7 @@ export default function PredictScreen() {
    *   donorTemplate?: string;
    *   cellType?: string;
    * }
-   * 
+   *
    * Response body: PredictionResponse
    */
   const makePrediction = async () => {
@@ -101,14 +102,17 @@ export default function PredictScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!selectedDisease && (!targetSequence || !pamSequence || !guideRNA || !donorTemplate || !cellType)) {
+    if (
+      !selectedDisease &&
+      (!targetSequence || !pamSequence || !guideRNA || !donorTemplate || !cellType)
+    ) {
       setError('Please select a disease or fill in all required fields');
       return;
     }
-    
+
     setError(null);
     setLoading(true);
-    
+
     try {
       // Call the Python ML model API
       const result = await makePrediction();
@@ -126,7 +130,7 @@ export default function PredictScreen() {
   };
 
   return (
-    <ScrollView 
+    <ScrollView
       style={[styles.container, isDark && styles.containerDark]}
       contentContainerStyle={styles.contentContainer}
     >
@@ -139,7 +143,7 @@ export default function PredictScreen() {
           Select a disease or enter the required parameters for CRISPR-Cas9 gene editing prediction
         </Text>
       </LinearGradient>
-      
+
       <View style={styles.content}>
         {error && (
           <View style={styles.errorContainer}>
@@ -147,14 +151,14 @@ export default function PredictScreen() {
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
-        
+
         {/* Input Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Input Parameters</Text>
-          
+
           <Text style={[styles.sectionSubtitle, isDark && styles.textDark]}>Select Disease</Text>
           <View style={styles.diseaseList}>
-            {diseases.map((disease) => (
+            {diseases.map(disease => (
               <TouchableOpacity
                 key={disease}
                 style={[
@@ -163,22 +167,26 @@ export default function PredictScreen() {
                   isDark && styles.diseaseItemDark,
                   selectedDisease === disease && isDark && styles.selectedDiseaseDark,
                 ]}
-                onPress={() => setSelectedDisease(disease)}>
+                onPress={() => setSelectedDisease(disease)}
+              >
                 <Text
                   style={[
                     styles.diseaseText,
                     selectedDisease === disease && styles.selectedDiseaseText,
                     isDark && styles.textDark,
                     selectedDisease === disease && isDark && styles.selectedDiseaseTextDark,
-                  ]}>
+                  ]}
+                >
                   {disease}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          <Text style={[styles.sectionSubtitle, isDark && styles.textDark]}>Or Enter Manual Parameters</Text>
-          
+          <Text style={[styles.sectionSubtitle, isDark && styles.textDark]}>
+            Or Enter Manual Parameters
+          </Text>
+
           <Text style={[styles.inputLabel, isDark && styles.textDark]}>Target DNA Sequence</Text>
           <TextInput
             style={[styles.input, isDark && styles.inputDark]}
@@ -237,7 +245,8 @@ export default function PredictScreen() {
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleSubmit}
-            disabled={loading}>
+            disabled={loading}
+          >
             <Text style={styles.buttonText}>
               {loading ? 'Analyzing...' : 'Predict Edit Efficiency'}
             </Text>
@@ -248,15 +257,19 @@ export default function PredictScreen() {
         {predictionResult && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Prediction Results</Text>
-            
+
             {/* Gene Editor */}
             <View style={styles.resultCard}>
               <Text style={[styles.resultTitle, isDark && styles.textDark]}>Gene Editor</Text>
               <View style={styles.sequenceContainer}>
                 <Text style={[styles.sequenceLabel, isDark && styles.textDark]}>Original:</Text>
-                <Text style={[styles.sequence, isDark && styles.textDark]}>{predictionResult.originalSequence}</Text>
+                <Text style={[styles.sequence, isDark && styles.textDark]}>
+                  {predictionResult.originalSequence}
+                </Text>
                 <Text style={[styles.sequenceLabel, isDark && styles.textDark]}>Edited:</Text>
-                <Text style={[styles.sequence, isDark && styles.textDark]}>{predictionResult.editedSequence}</Text>
+                <Text style={[styles.sequence, isDark && styles.textDark]}>
+                  {predictionResult.editedSequence}
+                </Text>
               </View>
             </View>
 
@@ -268,7 +281,9 @@ export default function PredictScreen() {
                   {predictionResult.efficiency}% Success Probability
                 </Text>
                 <View style={styles.gauge}>
-                  <View style={[styles.gaugeProgress, { width: `${predictionResult.efficiency}%` }]} />
+                  <View
+                    style={[styles.gaugeProgress, { width: `${predictionResult.efficiency}%` }]}
+                  />
                 </View>
               </View>
             </View>
@@ -292,7 +307,9 @@ export default function PredictScreen() {
 
             {/* Therapeutic Report */}
             <View style={styles.resultCard}>
-              <Text style={[styles.resultTitle, isDark && styles.textDark]}>Therapeutic Report</Text>
+              <Text style={[styles.resultTitle, isDark && styles.textDark]}>
+                Therapeutic Report
+              </Text>
               <Text style={[styles.reportText, isDark && styles.textDark]}>
                 {predictionResult.therapeuticSummary}
               </Text>

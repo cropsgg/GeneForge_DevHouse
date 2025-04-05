@@ -1,6 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useColorScheme } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type ThemeContextType = {
   isDark: boolean;
@@ -16,7 +16,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Load saved theme preference
-    AsyncStorage.getItem('theme').then((theme) => {
+    AsyncStorage.getItem('theme').then(theme => {
       if (theme !== null) {
         setIsDark(theme === 'dark');
       }
@@ -47,4 +47,4 @@ export function useTheme() {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
-} 
+}

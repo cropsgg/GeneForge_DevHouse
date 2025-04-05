@@ -1,9 +1,25 @@
+import {
+  Database,
+  Upload,
+  RefreshCw,
+  List,
+  ArrowDownCircle,
+  ArrowUpCircle,
+} from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
-import { useSmartContract } from '../context/SmartContractContext';
-import { useWallet } from '../context/WalletContext';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+  Platform,
+} from 'react-native';
+
 import { useTheme } from '../context/ThemeContext';
-import { Database, Upload, RefreshCw, List, ArrowDownCircle, ArrowUpCircle } from 'lucide-react-native';
 
 type Asset = {
   id: string;
@@ -14,15 +30,9 @@ type Asset = {
 
 const ProvenanceManager = () => {
   const { isDark } = useTheme();
-  const { isConnected, account } = useWallet();
-  const { 
-    registerAsset, 
-    transferAsset, 
-    getAssetHistory, 
-    isLoading, 
-    lastTransactionHash, 
-    error
-  } = useSmartContract();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastTransactionId, setLastTransactionId] = useState<string | null>(null);
 
   const [assets, setAssets] = useState<Asset[]>([]);
   const [assetHistory, setAssetHistory] = useState<any[]>([]);
@@ -34,42 +44,55 @@ const ProvenanceManager = () => {
 
   // Mock assets for demonstration
   useEffect(() => {
-    if (isConnected) {
-      setIsLoadingAssets(true);
-      // In a real app, we would fetch assets from the blockchain
-      setTimeout(() => {
-        const mockAssets: Asset[] = [
-          {
-            id: '0x123',
-            name: 'Gene Sequence A',
-            description: 'CRISPR modified gene sequence for disease resistance',
-            createdAt: Date.now() - 86400000 * 3,
-          },
-          {
-            id: '0x456',
-            name: 'Protein Structure B',
-            description: 'Novel protein structure with enhanced stability',
-            createdAt: Date.now() - 86400000 * 2,
-          },
-        ];
-        setAssets(mockAssets);
-        setIsLoadingAssets(false);
-      }, 1000);
-    } else {
-      setAssets([]);
-    }
-  }, [isConnected]);
+    setIsLoadingAssets(true);
+    // Simulate fetching assets
+    setTimeout(() => {
+      const mockAssets: Asset[] = [
+        {
+          id: '0x123',
+          name: 'Gene Sequence A',
+          description: 'CRISPR modified gene sequence for disease resistance',
+          createdAt: Date.now() - 86400000 * 3,
+        },
+        {
+          id: '0x456',
+          name: 'Protein Structure B',
+          description: 'Novel protein structure with enhanced stability',
+          createdAt: Date.now() - 86400000 * 2,
+        },
+      ];
+      setAssets(mockAssets);
+      setIsLoadingAssets(false);
+    }, 1000);
+  }, []);
 
   const fetchAssetHistory = async (assetId: string) => {
     if (!assetId) return;
-    
+
     try {
-      const history = await getAssetHistory(assetId);
-      setAssetHistory(history);
-      setSelectedAsset(assetId);
+      // Simulate fetching asset history
+      setIsLoading(true);
+      setTimeout(() => {
+        const mockHistory = [
+          {
+            type: 'CREATED',
+            timestamp: Date.now() - 86400000 * 3,
+            by: '0x789abc',
+          },
+          {
+            type: 'UPDATED',
+            timestamp: Date.now() - 86400000 * 2,
+            by: '0x789abc',
+          },
+        ];
+        setAssetHistory(mockHistory);
+        setSelectedAsset(assetId);
+        setIsLoading(false);
+      }, 1000);
     } catch (err) {
       console.error('Error fetching asset history:', err);
       Alert.alert('Error', 'Failed to fetch asset history');
+      setIsLoading(false);
     }
   };
 
@@ -80,34 +103,32 @@ const ProvenanceManager = () => {
     }
 
     try {
+      setIsLoading(true);
       const assetId = `0x${Math.random().toString(16).substr(2, 12)}`;
-      const metadata = {
-        name: newAssetName,
-        description: newAssetDescription,
-        createdAt: Date.now(),
-      };
 
-      await registerAsset(assetId, metadata);
-      
-      // In a real app, we would fetch the updated assets from blockchain
-      // Here we're just updating the local state for demonstration
-      setAssets([
-        ...assets,
-        {
-          id: assetId,
-          name: newAssetName,
-          description: newAssetDescription,
-          createdAt: Date.now(),
-        },
-      ]);
-      
-      setNewAssetName('');
-      setNewAssetDescription('');
-      
-      Alert.alert('Success', 'Asset registered successfully');
+      // Simulate asset registration
+      setTimeout(() => {
+        setAssets([
+          ...assets,
+          {
+            id: assetId,
+            name: newAssetName,
+            description: newAssetDescription,
+            createdAt: Date.now(),
+          },
+        ]);
+
+        setNewAssetName('');
+        setNewAssetDescription('');
+        setLastTransactionId(assetId);
+        setIsLoading(false);
+        Alert.alert('Success', 'Asset registered successfully');
+      }, 1500);
     } catch (err) {
       console.error('Error registering asset:', err);
       Alert.alert('Error', 'Failed to register asset');
+      setIsLoading(false);
+      setError('Failed to register asset');
     }
   };
 
@@ -123,36 +144,32 @@ const ProvenanceManager = () => {
     }
 
     try {
-      await transferAsset(selectedAsset, transferAddress);
-      
-      // In a real app, we would update the assets and history from blockchain
-      // Fetch updated history to show the transfer
-      fetchAssetHistory(selectedAsset);
-      setTransferAddress('');
-      
-      Alert.alert('Success', 'Asset transferred successfully');
+      setIsLoading(true);
+
+      // Simulate asset transfer
+      setTimeout(() => {
+        // Update history to show the transfer
+        const newHistory = [
+          ...assetHistory,
+          {
+            type: 'TRANSFERRED',
+            timestamp: Date.now(),
+            by: transferAddress,
+          },
+        ];
+        setAssetHistory(newHistory);
+        setTransferAddress('');
+        setLastTransactionId(`TX${Math.random().toString(16).substring(2, 10)}`);
+        setIsLoading(false);
+        Alert.alert('Success', 'Asset transferred successfully');
+      }, 1500);
     } catch (err) {
       console.error('Error transferring asset:', err);
       Alert.alert('Error', 'Failed to transfer asset');
+      setIsLoading(false);
+      setError('Failed to transfer asset');
     }
   };
-
-  // Render loading state
-  if (!isConnected) {
-    return (
-      <View style={[styles.container, isDark ? styles.containerDark : styles.containerLight]}>
-        <View style={styles.notConnectedContainer}>
-          <Database size={40} color={isDark ? '#818CF8' : '#6366F1'} />
-          <Text style={[styles.title, isDark ? styles.titleDark : styles.titleLight]}>
-            Wallet Not Connected
-          </Text>
-          <Text style={[styles.subtitle, isDark ? styles.subtitleDark : styles.subtitleLight]}>
-            Please connect your wallet to manage gene provenance
-          </Text>
-        </View>
-      </View>
-    );
-  }
 
   return (
     <ScrollView style={[styles.container, isDark ? styles.containerDark : styles.containerLight]}>
@@ -169,11 +186,16 @@ const ProvenanceManager = () => {
       <View style={[styles.section, isDark ? styles.sectionDark : styles.sectionLight]}>
         <View style={styles.sectionHeader}>
           <Upload size={20} color={isDark ? '#818CF8' : '#6366F1'} />
-          <Text style={[styles.sectionTitle, isDark ? styles.sectionTitleDark : styles.sectionTitleLight]}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              isDark ? styles.sectionTitleDark : styles.sectionTitleLight,
+            ]}
+          >
             Register New Gene
           </Text>
         </View>
-        
+
         <TextInput
           style={[styles.input, isDark ? styles.inputDark : styles.inputLight]}
           placeholder="Gene Name"
@@ -181,7 +203,7 @@ const ProvenanceManager = () => {
           value={newAssetName}
           onChangeText={setNewAssetName}
         />
-        
+
         <TextInput
           style={[styles.input, styles.textArea, isDark ? styles.inputDark : styles.inputLight]}
           placeholder="Description"
@@ -191,18 +213,16 @@ const ProvenanceManager = () => {
           multiline
           numberOfLines={3}
         />
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={[styles.button, isDark ? styles.buttonDark : styles.buttonLight]}
           onPress={handleRegisterAsset}
           disabled={isLoading}
         >
           {isLoading ? (
-            <ActivityIndicator size="small" color={isDark ? '#1F2937' : '#FFFFFF'} />
+            <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <Text style={[styles.buttonText, isDark ? styles.buttonTextDark : styles.buttonTextLight]}>
-              Register
-            </Text>
+            <Text style={styles.buttonText}>Register Asset</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -211,54 +231,58 @@ const ProvenanceManager = () => {
       <View style={[styles.section, isDark ? styles.sectionDark : styles.sectionLight]}>
         <View style={styles.sectionHeader}>
           <List size={20} color={isDark ? '#818CF8' : '#6366F1'} />
-          <Text style={[styles.sectionTitle, isDark ? styles.sectionTitleDark : styles.sectionTitleLight]}>
-            Your Genes
+          <Text
+            style={[
+              styles.sectionTitle,
+              isDark ? styles.sectionTitleDark : styles.sectionTitleLight,
+            ]}
+          >
+            Registered Genes
           </Text>
-          <TouchableOpacity style={styles.refreshButton}>
-            <RefreshCw size={16} color={isDark ? '#818CF8' : '#6366F1'} />
-          </TouchableOpacity>
         </View>
-        
+
         {isLoadingAssets ? (
-          <ActivityIndicator style={styles.loader} size="large" color={isDark ? '#818CF8' : '#6366F1'} />
+          <ActivityIndicator
+            style={styles.loader}
+            size="large"
+            color={isDark ? '#818CF8' : '#6366F1'}
+          />
         ) : assets.length === 0 ? (
           <Text style={[styles.emptyText, isDark ? styles.emptyTextDark : styles.emptyTextLight]}>
-            No genes registered yet
+            No assets registered yet
           </Text>
         ) : (
-          <View style={styles.assetsList}>
-            {assets.map((asset) => (
-              <TouchableOpacity
-                key={asset.id}
-                style={[
-                  styles.assetItem,
-                  isDark ? styles.assetItemDark : styles.assetItemLight,
-                  selectedAsset === asset.id && (isDark ? styles.assetItemSelectedDark : styles.assetItemSelectedLight)
-                ]}
-                onPress={() => fetchAssetHistory(asset.id)}
+          assets.map((asset, index) => (
+            <TouchableOpacity
+              key={asset.id}
+              style={[
+                styles.assetItem,
+                selectedAsset === asset.id && styles.selectedAsset,
+                isDark ? styles.assetItemDark : styles.assetItemLight,
+                selectedAsset === asset.id && isDark && styles.selectedAssetDark,
+              ]}
+              onPress={() => fetchAssetHistory(asset.id)}
+            >
+              <Text
+                style={[styles.assetName, isDark ? styles.assetNameDark : styles.assetNameLight]}
               >
-                <View style={styles.assetContent}>
-                  <Text style={[styles.assetName, isDark ? styles.assetNameDark : styles.assetNameLight]}>
-                    {asset.name}
-                  </Text>
-                  <Text style={[styles.assetId, isDark ? styles.assetIdDark : styles.assetIdLight]}>
-                    ID: {asset.id}
-                  </Text>
-                  <Text 
-                    numberOfLines={2} 
-                    style={[styles.assetDescription, isDark ? styles.assetDescriptionDark : styles.assetDescriptionLight]}
-                  >
-                    {asset.description}
-                  </Text>
-                </View>
-                {selectedAsset === asset.id && (
-                  <View style={styles.assetSelected}>
-                    <View style={[styles.indicator, isDark ? styles.indicatorDark : styles.indicatorLight]} />
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
+                {asset.name}
+              </Text>
+              <Text
+                style={[
+                  styles.assetDescription,
+                  isDark ? styles.assetDescriptionDark : styles.assetDescriptionLight,
+                ]}
+              >
+                {asset.description}
+              </Text>
+              <Text
+                style={[styles.assetDate, isDark ? styles.assetDateDark : styles.assetDateLight]}
+              >
+                Created: {new Date(asset.createdAt).toLocaleString()}
+              </Text>
+            </TouchableOpacity>
+          ))
         )}
       </View>
 
@@ -267,34 +291,33 @@ const ProvenanceManager = () => {
         <View style={[styles.section, isDark ? styles.sectionDark : styles.sectionLight]}>
           <View style={styles.sectionHeader}>
             <ArrowUpCircle size={20} color={isDark ? '#818CF8' : '#6366F1'} />
-            <Text style={[styles.sectionTitle, isDark ? styles.sectionTitleDark : styles.sectionTitleLight]}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                isDark ? styles.sectionTitleDark : styles.sectionTitleLight,
+              ]}
+            >
               Transfer Gene
             </Text>
           </View>
-          
-          <Text style={[styles.selectedAssetText, isDark ? styles.selectedAssetTextDark : styles.selectedAssetTextLight]}>
-            Selected: {assets.find(a => a.id === selectedAsset)?.name || selectedAsset}
-          </Text>
-          
+
           <TextInput
             style={[styles.input, isDark ? styles.inputDark : styles.inputLight]}
-            placeholder="Destination Address"
+            placeholder="Recipient Address"
             placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'}
             value={transferAddress}
             onChangeText={setTransferAddress}
           />
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={[styles.button, isDark ? styles.buttonDark : styles.buttonLight]}
             onPress={handleTransferAsset}
             disabled={isLoading}
           >
             {isLoading ? (
-              <ActivityIndicator size="small" color={isDark ? '#1F2937' : '#FFFFFF'} />
+              <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
-              <Text style={[styles.buttonText, isDark ? styles.buttonTextDark : styles.buttonTextLight]}>
-                Transfer
-              </Text>
+              <Text style={styles.buttonText}>Transfer Asset</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -304,95 +327,106 @@ const ProvenanceManager = () => {
       {selectedAsset && assetHistory.length > 0 && (
         <View style={[styles.section, isDark ? styles.sectionDark : styles.sectionLight]}>
           <View style={styles.sectionHeader}>
-            <ArrowDownCircle size={20} color={isDark ? '#818CF8' : '#6366F1'} />
-            <Text style={[styles.sectionTitle, isDark ? styles.sectionTitleDark : styles.sectionTitleLight]}>
-              Provenance History
+            <RefreshCw size={20} color={isDark ? '#818CF8' : '#6366F1'} />
+            <Text
+              style={[
+                styles.sectionTitle,
+                isDark ? styles.sectionTitleDark : styles.sectionTitleLight,
+              ]}
+            >
+              Asset History
             </Text>
           </View>
-          
-          <View style={styles.historyList}>
-            {assetHistory.map((event, index) => (
-              <View 
-                key={index} 
-                style={[styles.historyItem, isDark ? styles.historyItemDark : styles.historyItemLight]}
-              >
-                <View style={styles.historyDot} />
-                <View style={styles.historyContent}>
-                  <Text style={[styles.historyType, isDark ? styles.historyTypeDark : styles.historyTypeLight]}>
-                    {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
-                  </Text>
-                  <Text style={[styles.historyDate, isDark ? styles.historyDateDark : styles.historyDateLight]}>
-                    {new Date(event.timestamp).toLocaleString()}
-                  </Text>
-                  <View style={styles.historyAddresses}>
-                    <Text style={[styles.historyAddressLabel, isDark ? styles.historyLabelDark : styles.historyLabelLight]}>
-                      From:
-                    </Text>
-                    <Text 
-                      style={[styles.historyAddress, isDark ? styles.historyAddressDark : styles.historyAddressLight]}
-                      numberOfLines={1}
-                    >
-                      {event.from}
-                    </Text>
-                  </View>
-                  <View style={styles.historyAddresses}>
-                    <Text style={[styles.historyAddressLabel, isDark ? styles.historyLabelDark : styles.historyLabelLight]}>
-                      To:
-                    </Text>
-                    <Text 
-                      style={[styles.historyAddress, isDark ? styles.historyAddressDark : styles.historyAddressLight]}
-                      numberOfLines={1}
-                    >
-                      {event.to}
-                    </Text>
-                  </View>
-                </View>
+
+          {assetHistory.map((event, index) => (
+            <View
+              key={index}
+              style={[
+                styles.historyItem,
+                isDark ? styles.historyItemDark : styles.historyItemLight,
+              ]}
+            >
+              <View style={styles.historyIconContainer}>
+                {event.type === 'CREATED' && (
+                  <Database size={16} color={isDark ? '#818CF8' : '#6366F1'} />
+                )}
+                {event.type === 'TRANSFERRED' && (
+                  <ArrowDownCircle size={16} color={isDark ? '#F472B6' : '#EC4899'} />
+                )}
+                {event.type === 'UPDATED' && (
+                  <RefreshCw size={16} color={isDark ? '#34D399' : '#10B981'} />
+                )}
               </View>
-            ))}
-          </View>
+              <View style={styles.historyContent}>
+                <Text
+                  style={[
+                    styles.historyType,
+                    isDark ? styles.historyTypeDark : styles.historyTypeLight,
+                  ]}
+                >
+                  {event.type}
+                </Text>
+                <Text
+                  style={[
+                    styles.historyDate,
+                    isDark ? styles.historyDateDark : styles.historyDateLight,
+                  ]}
+                >
+                  {new Date(event.timestamp).toLocaleString()}
+                </Text>
+                {event.by && (
+                  <Text
+                    style={[
+                      styles.historyBy,
+                      isDark ? styles.historyByDark : styles.historyByLight,
+                    ]}
+                  >
+                    By: {event.by}
+                  </Text>
+                )}
+              </View>
+            </View>
+          ))}
         </View>
       )}
 
       {/* Transaction Status */}
-      {(lastTransactionHash || error) && (
+      {(lastTransactionId || error) && (
         <View style={[styles.section, isDark ? styles.sectionDark : styles.sectionLight]}>
           <View style={styles.sectionHeader}>
             <Database size={20} color={isDark ? '#818CF8' : '#6366F1'} />
-            <Text style={[styles.sectionTitle, isDark ? styles.sectionTitleDark : styles.sectionTitleLight]}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                isDark ? styles.sectionTitleDark : styles.sectionTitleLight,
+              ]}
+            >
               Transaction Status
             </Text>
           </View>
-          
-          {error && (
-            <View style={styles.error}>
-              <Text style={styles.errorText}>Error: {error}</Text>
-            </View>
-          )}
-          
-          {lastTransactionHash && (
+
+          {error && <Text style={styles.errorText}>{error}</Text>}
+
+          {lastTransactionId && (
             <View style={styles.transactionInfo}>
-              <Text style={[styles.txLabel, isDark ? styles.txLabelDark : styles.txLabelLight]}>
-                Transaction Hash:
-              </Text>
-              <Text 
-                style={[styles.txHash, isDark ? styles.txHashDark : styles.txHashLight]}
-                numberOfLines={1}
+              <Text
+                style={[
+                  styles.transactionLabel,
+                  isDark ? styles.transactionLabelDark : styles.transactionLabelLight,
+                ]}
               >
-                {lastTransactionHash}
+                Transaction ID:
               </Text>
-              {Platform.OS === 'web' && (
-                <TouchableOpacity 
-                  style={[styles.viewTxButton, isDark ? styles.viewTxButtonDark : styles.viewTxButtonLight]}
-                  onPress={() => {
-                    // Open transaction in block explorer
-                    window.open(`https://explorer.aptoslabs.com/txn/${lastTransactionHash}?network=testnet`, '_blank');
-                  }}
+              <TouchableOpacity onPress={() => Alert.alert('Transaction ID', lastTransactionId)}>
+                <Text
+                  style={[
+                    styles.transactionHash,
+                    isDark ? styles.transactionHashDark : styles.transactionHashLight,
+                  ]}
                 >
-                  <Text style={[styles.viewTxText, isDark ? styles.viewTxTextDark : styles.viewTxTextLight]}>
-                    View on Explorer
-                  </Text>
-                </TouchableOpacity>
-              )}
+                  {lastTransactionId}
+                </Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -404,16 +438,16 @@ const ProvenanceManager = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
   },
   containerLight: {
     backgroundColor: '#F9FAFB',
   },
   containerDark: {
-    backgroundColor: '#111827',
+    backgroundColor: '#1F2937',
   },
   header: {
-    marginBottom: 24,
+    padding: 20,
+    marginBottom: 10,
   },
   title: {
     fontSize: 24,
@@ -437,24 +471,20 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
   section: {
-    marginBottom: 24,
     borderRadius: 12,
+    marginHorizontal: 20,
+    marginBottom: 20,
     padding: 16,
   },
   sectionLight: {
     backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    borderColor: '#E5E7EB',
+    borderWidth: 1,
   },
   sectionDark: {
-    backgroundColor: '#1F2937',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
+    backgroundColor: '#374151',
+    borderColor: '#4B5563',
+    borderWidth: 1,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -463,9 +493,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: 'bold',
     marginLeft: 8,
-    flex: 1,
   },
   sectionTitleLight: {
     color: '#111827',
@@ -473,34 +502,32 @@ const styles = StyleSheet.create({
   sectionTitleDark: {
     color: '#F9FAFB',
   },
-  refreshButton: {
-    padding: 4,
-  },
   input: {
-    height: 48,
+    borderWidth: 1,
     borderRadius: 8,
-    paddingHorizontal: 16,
-    marginBottom: 12,
+    padding: 12,
+    marginBottom: 16,
+    fontSize: 16,
   },
   inputLight: {
-    backgroundColor: '#F3F4F6',
-    color: '#1F2937',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#D1D5DB',
+    color: '#111827',
   },
   inputDark: {
-    backgroundColor: '#374151',
+    backgroundColor: '#1F2937',
+    borderColor: '#4B5563',
     color: '#F9FAFB',
   },
   textArea: {
-    height: 100,
+    minHeight: 80,
     textAlignVertical: 'top',
-    paddingTop: 12,
   },
   button: {
-    height: 48,
     borderRadius: 8,
-    justifyContent: 'center',
+    padding: 14,
     alignItems: 'center',
-    marginTop: 8,
+    justifyContent: 'center',
   },
   buttonLight: {
     backgroundColor: '#6366F1',
@@ -509,60 +536,47 @@ const styles = StyleSheet.create({
     backgroundColor: '#818CF8',
   },
   buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  buttonTextLight: {
     color: '#FFFFFF',
-  },
-  buttonTextDark: {
-    color: '#1F2937',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   loader: {
     marginVertical: 20,
   },
   emptyText: {
     textAlign: 'center',
-    paddingVertical: 20,
-    fontStyle: 'italic',
+    padding: 20,
+    fontSize: 16,
   },
   emptyTextLight: {
-    color: '#9CA3AF',
-  },
-  emptyTextDark: {
     color: '#6B7280',
   },
-  assetsList: {
-    marginTop: 8,
+  emptyTextDark: {
+    color: '#9CA3AF',
   },
   assetItem: {
     borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-    flexDirection: 'row',
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 2,
   },
   assetItemLight: {
     backgroundColor: '#F3F4F6',
+    borderColor: '#F3F4F6',
   },
   assetItemDark: {
-    backgroundColor: '#374151',
+    backgroundColor: '#1F2937',
+    borderColor: '#1F2937',
   },
-  assetItemSelectedLight: {
+  selectedAsset: {
     borderColor: '#6366F1',
-    borderWidth: 1,
-    backgroundColor: '#EEF2FF',
   },
-  assetItemSelectedDark: {
+  selectedAssetDark: {
     borderColor: '#818CF8',
-    borderWidth: 1,
-    backgroundColor: '#2e3755',
-  },
-  assetContent: {
-    flex: 1,
   },
   assetName: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: 'bold',
     marginBottom: 4,
   },
   assetNameLight: {
@@ -571,18 +585,9 @@ const styles = StyleSheet.create({
   assetNameDark: {
     color: '#F9FAFB',
   },
-  assetId: {
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  assetIdLight: {
-    color: '#6B7280',
-  },
-  assetIdDark: {
-    color: '#9CA3AF',
-  },
   assetDescription: {
     fontSize: 14,
+    marginBottom: 8,
   },
   assetDescriptionLight: {
     color: '#4B5563',
@@ -590,33 +595,14 @@ const styles = StyleSheet.create({
   assetDescriptionDark: {
     color: '#D1D5DB',
   },
-  assetSelected: {
-    justifyContent: 'center',
-    marginLeft: 8,
+  assetDate: {
+    fontSize: 12,
   },
-  indicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  assetDateLight: {
+    color: '#6B7280',
   },
-  indicatorLight: {
-    backgroundColor: '#6366F1',
-  },
-  indicatorDark: {
-    backgroundColor: '#818CF8',
-  },
-  selectedAssetText: {
-    marginBottom: 12,
-    fontWeight: '500',
-  },
-  selectedAssetTextLight: {
-    color: '#4B5563',
-  },
-  selectedAssetTextDark: {
-    color: '#D1D5DB',
-  },
-  historyList: {
-    marginTop: 8,
+  assetDateDark: {
+    color: '#9CA3AF',
   },
   historyItem: {
     flexDirection: 'row',
@@ -628,127 +614,78 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
   },
   historyItemDark: {
-    backgroundColor: '#374151',
+    backgroundColor: '#1F2937',
   },
-  historyDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#6366F1',
-    marginTop: 4,
-    marginRight: 8,
+  historyIconContainer: {
+    marginRight: 12,
+    width: 24,
+    alignItems: 'center',
   },
   historyContent: {
     flex: 1,
   },
   historyType: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     marginBottom: 4,
-  },
-  historyTypeDark: {
-    color: '#F9FAFB',
   },
   historyTypeLight: {
     color: '#111827',
   },
-  historyDate: {
-    fontSize: 14,
-    marginBottom: 8,
+  historyTypeDark: {
+    color: '#F9FAFB',
   },
-  historyDateDark: {
-    color: '#9CA3AF',
+  historyDate: {
+    fontSize: 12,
+    marginBottom: 2,
   },
   historyDateLight: {
     color: '#6B7280',
   },
-  historyAddresses: {
-    flexDirection: 'row',
-    marginBottom: 4,
-    alignItems: 'center',
-  },
-  historyAddressLabel: {
-    fontSize: 14,
-    width: 40,
-  },
-  historyLabelDark: {
-    color: '#D1D5DB',
-  },
-  historyLabelLight: {
-    color: '#4B5563',
-  },
-  historyAddress: {
-    fontSize: 14,
-    flex: 1,
-  },
-  historyAddressDark: {
+  historyDateDark: {
     color: '#9CA3AF',
   },
-  historyAddressLight: {
+  historyBy: {
+    fontSize: 12,
+  },
+  historyByLight: {
     color: '#6B7280',
   },
-  error: {
-    backgroundColor: '#FECACA',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+  historyByDark: {
+    color: '#9CA3AF',
   },
   errorText: {
-    color: '#991B1B',
-  },
-  transactionInfo: {
-    borderRadius: 8,
-    padding: 12,
-  },
-  txLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  txLabelDark: {
-    color: '#D1D5DB',
-  },
-  txLabelLight: {
-    color: '#4B5563',
-  },
-  txHash: {
-    fontSize: 14,
+    color: '#EF4444',
     marginBottom: 8,
   },
-  txHashDark: {
-    color: '#9CA3AF',
+  transactionInfo: {
+    flexDirection: 'column',
+    marginBottom: 8,
   },
-  txHashLight: {
-    color: '#6B7280',
+  transactionLabel: {
+    fontWeight: 'bold',
+    marginRight: 8,
   },
-  viewTxButton: {
-    alignSelf: 'flex-start',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 4,
+  transactionLabelLight: {
+    color: '#111827',
   },
-  viewTxButtonDark: {
-    backgroundColor: '#374151',
+  transactionLabelDark: {
+    color: '#F9FAFB',
   },
-  viewTxButtonLight: {
-    backgroundColor: '#F3F4F6',
+  transactionHash: {
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontSize: 14,
   },
-  viewTxText: {
-    fontSize: 12,
-    fontWeight: '500',
+  transactionHashLight: {
+    color: '#4F46E5',
   },
-  viewTxTextDark: {
-    color: '#D1D5DB',
-  },
-  viewTxTextLight: {
-    color: '#4B5563',
+  transactionHashDark: {
+    color: '#818CF8',
   },
   notConnectedContainer: {
-    flex: 1,
-    justifyContent: 'center',
+    padding: 40,
     alignItems: 'center',
-    padding: 24,
+    justifyContent: 'center',
   },
 });
 
-export default ProvenanceManager; 
+export default ProvenanceManager;
