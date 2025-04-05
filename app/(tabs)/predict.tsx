@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { CircleAlert as AlertCircle } from 'lucide-react-native';
-import React, { useState } from 'react';
+import { CircleAlert as AlertCircle, Thermometer, Droplets, Wind } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   TextInput,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 
 import { useTheme } from '../context/ThemeContext';
@@ -22,6 +23,21 @@ interface PredictionResponse {
   efficiency: number;
 }
 
+// Interface for lab environment data
+interface LabEnvironment {
+  temperature: number;
+  humidity: number;
+  aqi: number;
+  isOptimal: boolean;
+}
+
+// Optimal ranges for lab environment
+const OPTIMAL_RANGES = {
+  temperature: { min: 20, max: 25 }, // °C
+  humidity: { min: 40, max: 60 },    // %
+  aqi: { min: 0, max: 200 },          // AQI
+};
+
 export default function PredictScreen() {
   const { isDark } = useTheme();
 
@@ -29,6 +45,55 @@ export default function PredictScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [predictionResult, setPredictionResult] = useState<PredictionResponse | null>(null);
+  const [labEnvironment, setLabEnvironment] = useState<LabEnvironment | null>(null);
+  const [fetchingEnvironment, setFetchingEnvironment] = useState(true);
+
+  // Fetch lab environment data on component mount
+  useEffect(() => {
+    fetchLabEnvironment();
+  }, []);
+
+  // Function to fetch lab environment data from the server
+  const fetchLabEnvironment = async () => {
+    setFetchingEnvironment(true);
+    try {
+      // Fetch data from the API endpoint
+      const response = await fetch('http://192.168.12.45/data');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      // Parse the JSON response
+      const data = await response.json();
+      
+      // Check if all values are within optimal range
+      const isOptimal = 
+        data.temperature >= OPTIMAL_RANGES.temperature.min && 
+        data.temperature <= OPTIMAL_RANGES.temperature.max &&
+        data.humidity >= OPTIMAL_RANGES.humidity.min && 
+        data.humidity <= OPTIMAL_RANGES.humidity.max &&
+        data.aqi >= OPTIMAL_RANGES.aqi.min && 
+        data.aqi <= OPTIMAL_RANGES.aqi.max;
+      
+      setLabEnvironment({
+        temperature: data.temperature,
+        humidity: data.humidity,
+        aqi: data.aqi,
+        isOptimal
+      });
+    } catch (error) {
+      console.error('Error fetching environment data:', error);
+      setError('Failed to fetch laboratory environment data');
+      Alert.alert(
+        'Error',
+        'Failed to fetch laboratory environment data',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setFetchingEnvironment(false);
+    }
+  };
 
   // Validate DNA sequence (only A, T, C, G allowed)
   const validateDnaSequence = (sequence: string): boolean => {
@@ -64,6 +129,12 @@ export default function PredictScreen() {
   };
 
   const handleSubmit = async () => {
+    // Check if lab environment is optimal
+    if (!labEnvironment?.isOptimal) {
+      setError('Laboratory environment is not optimal for gene editing');
+      return;
+    }
+
     // Validate input
     if (!dnaSequence) {
       setError('Please enter a DNA sequence');
@@ -94,6 +165,130 @@ export default function PredictScreen() {
     }
   };
 
+  // Render environment status indicator
+  const renderEnvironmentStatus = () => {
+    if (fetchingEnvironment) {
+      return (
+        <View style={styles.environmentLoading}>
+          <ActivityIndicator size="large" color="#6366F1" />
+          <Text style={[styles.environmentLoadingText, isDark && styles.textDark]}>
+            Checking laboratory environment...
+          </Text>
+        </View>
+      );
+    }
+
+    if (!labEnvironment) {
+      return (
+        <View style={styles.errorContainer}>
+          <AlertCircle color="#EF4444" size={20} />
+          <Text style={styles.errorText}>Failed to fetch environment data</Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={[styles.environmentCard, isDark && styles.environmentCardDark]}>
+        <Text style={[styles.environmentTitle, isDark && styles.textDark]}>
+          Laboratory Environment Status
+        </Text>
+        
+        <View style={styles.environmentMetrics}>
+          <View style={styles.metricItem}>
+            <Thermometer size={20} color={isDark ? "#F9FAFB" : "#111827"} />
+            <Text style={[styles.metricLabel, isDark && styles.textDark]}>Temperature:</Text>
+            <Text style={[
+              styles.metricValue, 
+              isDark && styles.textDark,
+              labEnvironment.temperature < OPTIMAL_RANGES.temperature.min || 
+              labEnvironment.temperature > OPTIMAL_RANGES.temperature.max ? styles.metricValueBad : styles.metricValueGood
+            ]}>
+              {labEnvironment.temperature}°C
+            </Text>
+          </View>
+          
+          <View style={styles.metricItem}>
+            <Droplets size={20} color={isDark ? "#F9FAFB" : "#111827"} />
+            <Text style={[styles.metricLabel, isDark && styles.textDark]}>Humidity:</Text>
+            <Text style={[
+              styles.metricValue, 
+              isDark && styles.textDark,
+              labEnvironment.humidity < OPTIMAL_RANGES.humidity.min || 
+              labEnvironment.humidity > OPTIMAL_RANGES.humidity.max ? styles.metricValueBad : styles.metricValueGood
+            ]}>
+              {labEnvironment.humidity}%
+            </Text>
+          </View>
+          
+          <View style={styles.metricItem}>
+            <Wind size={20} color={isDark ? "#F9FAFB" : "#111827"} />
+            <Text style={[styles.metricLabel, isDark && styles.textDark]}>Air Quality:</Text>
+            <Text style={[
+              styles.metricValue, 
+              isDark && styles.textDark,
+              labEnvironment.aqi < OPTIMAL_RANGES.aqi.min || 
+              labEnvironment.aqi > OPTIMAL_RANGES.aqi.max ? styles.metricValueBad : styles.metricValueGood
+            ]}>
+              AQI {labEnvironment.aqi}
+            </Text>
+          </View>
+        </View>
+        
+        <View style={[
+          styles.environmentStatus,
+          labEnvironment.isOptimal ? styles.environmentStatusGood : styles.environmentStatusBad
+        ]}>
+          <Text style={styles.environmentStatusText}>
+            {labEnvironment.isOptimal 
+              ? "Environment Optimal for Gene Editing" 
+              : "Environment Not Suitable for Gene Editing"}
+          </Text>
+        </View>
+        
+        {!labEnvironment.isOptimal && (
+          <View style={styles.environmentActionContainer}>
+            <TouchableOpacity 
+              style={styles.refreshButton}
+              onPress={fetchLabEnvironment}
+            >
+              <Text style={styles.refreshButtonText}>Refresh Environment Data</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.cautionButton}
+              onPress={() => {
+                Alert.alert(
+                  'Warning: Non-Optimal Environment',
+                  'Proceeding with gene editing in non-optimal conditions may result in reduced efficiency and unpredictable outcomes. Are you sure you want to continue?',
+                  [
+                    {
+                      text: 'Cancel',
+                      style: 'cancel',
+                    },
+                    {
+                      text: 'Continue with Caution',
+                      style: 'destructive',
+                      onPress: () => {
+                        // Override the isOptimal flag to allow the user to proceed
+                        setLabEnvironment({
+                          ...labEnvironment,
+                          isOptimal: true
+                        });
+                      },
+                    },
+                  ],
+                  { cancelable: true }
+                );
+              }}
+            >
+              <Text style={styles.cautionButtonText}>Continue with Caution (Not Recommended)</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    );
+  };
+
   return (
     <ScrollView
       style={[styles.container, isDark && styles.containerDark]}
@@ -118,37 +313,42 @@ export default function PredictScreen() {
           </View>
         )}
 
-        {/* Input Section */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Input Parameters</Text>
+        {/* Environment Status Section */}
+        {renderEnvironmentStatus()}
 
-          <Text style={[styles.inputLabel, isDark && styles.textDark]}>DNA Sequence (20 characters)</Text>
-          <TextInput
-            style={[styles.input, isDark && styles.inputDark]}
-            placeholder="Enter DNA sequence (e.g., ATCGATCGATCGATCGATCG)"
-            placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'}
-            value={dnaSequence}
-            onChangeText={(text) => setDnaSequence(text.toUpperCase())}
-            autoCapitalize="characters"
-            maxLength={20}
-          />
-          <Text style={[styles.helperText, isDark && styles.helperTextDark]}>
-            Only A, T, C, G letters are allowed. Exactly 20 characters required.
-          </Text>
+        {/* Input Section - Only show if environment is optimal */}
+        {labEnvironment?.isOptimal && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Input Parameters</Text>
 
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleSubmit}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>
-              {loading ? 'Analyzing...' : 'Predict Edit Efficiency'}
+            <Text style={[styles.inputLabel, isDark && styles.textDark]}>DNA Sequence (20 characters)</Text>
+            <TextInput
+              style={[styles.input, isDark && styles.inputDark]}
+              placeholder="Enter DNA sequence (e.g., ATCGATCGATCGATCGATCG)"
+              placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'}
+              value={dnaSequence}
+              onChangeText={(text) => setDnaSequence(text.toUpperCase())}
+              autoCapitalize="characters"
+              maxLength={20}
+            />
+            <Text style={[styles.helperText, isDark && styles.helperTextDark]}>
+              Only A, T, C, G letters are allowed. Exactly 20 characters required.
             </Text>
-          </TouchableOpacity>
-        </View>
+
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={handleSubmit}
+              disabled={loading}
+            >
+              <Text style={styles.buttonText}>
+                {loading ? 'Analyzing...' : 'Predict Edit Efficiency'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Results Section */}
-        {predictionResult && (
+        {predictionResult && labEnvironment?.isOptimal && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Prediction Results</Text>
 
@@ -432,5 +632,101 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_500Medium',
     color: '#4F46E5',
     marginTop: 4,
+  },
+  environmentLoading: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    marginBottom: 24,
+  },
+  environmentLoadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    color: '#111827',
+  },
+  environmentCard: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+  },
+  environmentCardDark: {
+    backgroundColor: '#1F2937',
+  },
+  environmentTitle: {
+    fontSize: 18,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#111827',
+    marginBottom: 16,
+  },
+  environmentMetrics: {
+    marginBottom: 16,
+  },
+  metricItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  metricLabel: {
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    color: '#111827',
+    marginLeft: 8,
+    marginRight: 8,
+  },
+  metricValue: {
+    fontSize: 16,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#111827',
+  },
+  metricValueGood: {
+    color: '#10B981',
+  },
+  metricValueBad: {
+    color: '#EF4444',
+  },
+  environmentStatus: {
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  environmentStatusGood: {
+    backgroundColor: '#D1FAE5',
+  },
+  environmentStatusBad: {
+    backgroundColor: '#FEE2E2',
+  },
+  environmentStatusText: {
+    fontSize: 16,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#111827',
+  },
+  refreshButton: {
+    backgroundColor: '#6366F1',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  refreshButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  environmentActionContainer: {
+    marginTop: 16,
+  },
+  cautionButton: {
+    backgroundColor: '#F59E0B',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  cautionButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: 'Inter_600SemiBold',
   },
 });
