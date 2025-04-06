@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  Platform,
   Alert,
 } from 'react-native';
 
@@ -18,8 +17,12 @@ import { useTheme } from '../context/ThemeContext';
 interface PredictionResponse {
   originalSequence: string;
   editedSequence: string;
-  changeIndicator: string; // Shows which positions were changed
+  changeIndicator: string;
   efficiency: number;
+  changedPosition: number;
+  originalBase: string;
+  newBase: string;
+  message: string;
 }
 
 export default function PredictScreen() {
@@ -35,64 +38,73 @@ export default function PredictScreen() {
     return /^[ATCG]{20}$/.test(sequence);
   };
 
-  // Mock prediction function (will be replaced with API call later)
   const makePrediction = async (sequence: string): Promise<PredictionResponse> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Create mock edited sequence (change only 1 random position)
-    const originalArray = sequence.split('');
-    const editedArray = [...originalArray];
-    const bases = ['A', 'T', 'C', 'G'];
-    const changeIndicator = Array(sequence.length).fill('.');
-    
-    // Change only 1 random position
-    const position = Math.floor(Math.random() * sequence.length);
-    const currentBase = editedArray[position];
-    // Filter out the current base to ensure we change it
-    const possibleBases = bases.filter(base => base !== currentBase);
-    const newBase = possibleBases[Math.floor(Math.random() * possibleBases.length)];
-    editedArray[position] = newBase;
-    changeIndicator[position] = '*'; // Mark changed position
-    
-    return {
-      originalSequence: sequence,
-      editedSequence: editedArray.join(''),
-      changeIndicator: changeIndicator.join(''),
-      efficiency: Math.floor(Math.random() * 41) + 60, // Random efficiency between 60-100%
-    };
-  };
+    try {
+        // For physical devices/emulators use your local IP
+        // For iOS simulator use 'http://localhost:8000/predict'
+        // For Android emulator use 'http://10.0.2.2:8000/predict'
+        const API_URL = 'http://172.16.44.105:8000/predict';
+        
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ sequence }),
+        });
 
-  const handleSubmit = async () => {
-    // Validate input
+        if (!response.ok) {
+            let errorMsg = 'Failed to get prediction';
+            try {
+                const errorData = await response.json();
+                errorMsg = errorData.error || errorMsg;
+            } catch (e) {
+                errorMsg = `HTTP error! status: ${response.status}`;
+            }
+            throw new Error(errorMsg);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('API Error:', error);
+        let errorMessage = 'Network error';
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(errorMessage);
+    }
+};
+
+const handleSubmit = async () => {
     if (!dnaSequence) {
-      setError('Please enter a DNA sequence');
-      return;
+        setError('Please enter a DNA sequence');
+        return;
     }
     
     if (!validateDnaSequence(dnaSequence)) {
-      setError('DNA sequence must be exactly 20 characters and contain only A, T, C, G');
-      return;
+        setError('DNA sequence must be exactly 20 characters and contain only A, T, C, G');
+        return;
     }
 
     setError(null);
     setLoading(true);
 
     try {
-      // Generate mock prediction result
-      const result = await makePrediction(dnaSequence);
-      setPredictionResult(result);
+        const result = await makePrediction(dnaSequence);
+        setPredictionResult(result);
     } catch (error) {
-      setError('Failed to generate prediction');
-      Alert.alert(
-        'Error',
-        'Failed to generate prediction',
-        [{ text: 'OK' }]
-      );
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        setError(errorMessage);
+        Alert.alert(
+            'Error',
+            errorMessage,
+            [{ text: 'OK' }]
+        );
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
   return (
     <ScrollView
@@ -190,9 +202,8 @@ export default function PredictScreen() {
                       Changed Position:
                     </Text>
                     <Text style={[styles.positionText, isDark && styles.textDark]}>
-                      Position {predictionResult.changeIndicator.indexOf('*') + 1} 
-                      ({predictionResult.originalSequence[predictionResult.changeIndicator.indexOf('*')]} → 
-                      {predictionResult.editedSequence[predictionResult.changeIndicator.indexOf('*')]})
+                      Position {predictionResult.changedPosition} 
+                      ({predictionResult.originalBase} → {predictionResult.newBase})
                     </Text>
                   </View>
                 )}
@@ -204,13 +215,18 @@ export default function PredictScreen() {
               <Text style={[styles.resultTitle, isDark && styles.textDark]}>Efficiency Gauge</Text>
               <View style={styles.gaugeContainer}>
                 <Text style={[styles.efficiencyText, isDark && styles.textDark]}>
-                  {predictionResult.efficiency}% Success Probability
+                  {predictionResult.efficiency} Success Probability
                 </Text>
                 <View style={[styles.gauge, isDark && styles.gaugeDark]}>
                   <View
                     style={[styles.gaugeProgress, { width: `${predictionResult.efficiency}%` }]}
                   />
                 </View>
+                {predictionResult.message && (
+                  <Text style={[styles.messageText, isDark && styles.textDark]}>
+                    {predictionResult.message}
+                  </Text>
+                )}
               </View>
             </View>
           </View>
@@ -219,6 +235,8 @@ export default function PredictScreen() {
     </ScrollView>
   );
 }
+
+// ... (keep all the StyleSheet styles the same as in your original file)
 
 const styles = StyleSheet.create({
   container: {
@@ -432,5 +450,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_500Medium',
     color: '#4F46E5',
     marginTop: 4,
+  },
+  messageText: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#6B7280',
+    marginTop: 8,
+    textAlign: 'center',
   },
 });
