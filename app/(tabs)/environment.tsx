@@ -38,7 +38,7 @@ export default function EnvironmentScreen() {
   // Fetch lab environment data on component mount and set interval for real-time updates
   useEffect(() => {
     fetchLabEnvironment();
-    const intervalId = setInterval(fetchLabEnvironment, 10000); // Fetch every 3 seconds
+    const intervalId = setInterval(fetchLabEnvironment, 1000); // Fetch every 1 seconds
 
     return () => clearInterval(intervalId); // Cleanup interval on component unmount
   }, []);
